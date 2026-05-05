@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Dòng Xe | Car Management</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4><i class="fas fa-car-side me-2 text-primary"></i>Quản Lý Dòng Xe</h4>
+            <a th:href="@{/admin/models/new}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Thêm Dòng Xe
+            </a>
+        </div>
+
+        <form th:action="@{/admin/models}" method="get" class="mb-3">
+            <div class="row g-2">
+                <div class="col-md-5">
+                    <select class="form-select" name="brandId">
+                        <option value="">-- Tất cả hãng --</option>
+                        <option th:each="b : ${brands}" th:value="${b.id}" th:text="${b.name}"
+                                th:selected="${b.id == selectedBrandId}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i> Lọc</button>
+                    <a th:href="@{/admin/models}" class="btn btn-outline-secondary">Xóa lọc</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Tên Dòng Xe</th>
+                            <th>Hãng</th>
+                            <th>Năm</th>
+                            <th>Loại Xe</th>
+                            <th>Số Ghế</th>
+                            <th>Giá Cơ Bản</th>
+                            <th>Trạng Thái</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="m, iter : ${models}">
+                            <td th:text="${models.number * models.size + iter.index + 1}"></td>
+                            <td class="fw-semibold" th:text="${m.name}"></td>
+                            <td th:text="${m.brand.name}"></td>
+                            <td th:text="${m.year}"></td>
+                            <td><span class="badge bg-light text-dark" th:text="${m.carType}"></span></td>
+                            <td th:text="${m.seats != null} ? ${m.seats} : '—'"></td>
+                            <td class="small" th:text="${m.basePrice != null} ? ${#numbers.formatDecimal(m.basePrice, 0, 'COMMA', 0, 'POINT')} + ' ₫' : '—'"></td>
+                            <td>
+                                <span class="badge" th:classappend="${m.active} ? 'bg-success' : 'bg-secondary'"
+                                      th:text="${m.active} ? 'Hoạt động' : 'Dừng'"></span>
+                            </td>
+                            <td>
+                                <a th:href="@{/admin/models/{id}/edit(id=${m.id})}" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form th:action="@{/admin/models/{id}/delete(id=${m.id})}" method="post" class="d-inline"
+                                      onsubmit="return confirm('Vô hiệu hóa dòng xe này?')">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-ban"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${models.empty}">
+                            <td colspan="9" class="text-center text-muted py-4">Không có dữ liệu</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <nav th:if="${models.totalPages > 1}" class="mt-3">
+            <ul class="pagination">
+                <li class="page-item" th:classappend="${models.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/models(brandId=${selectedBrandId}, page=${models.number - 1})}"><i class="fas fa-chevron-left"></i></a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, models.totalPages - 1)}"
+                    th:classappend="${i == models.number} ? 'active'">
+                    <a class="page-link" th:href="@{/admin/models(brandId=${selectedBrandId}, page=${i})}" th:text="${i + 1}"></a>
+                </li>
+                <li class="page-item" th:classappend="${models.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/models(brandId=${selectedBrandId}, page=${models.number + 1})}"><i class="fas fa-chevron-right"></i></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

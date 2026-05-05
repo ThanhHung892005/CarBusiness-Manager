@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Lịch Hẹn Dịch Vụ | Car Management</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4><i class="fas fa-calendar-check me-2 text-primary"></i>Lịch Hẹn Dịch Vụ</h4>
+            <a th:href="@{/sales/appointments/new}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Đặt Lịch Mới
+            </a>
+        </div>
+
+        <form th:action="@{/sales/appointments}" method="get" class="mb-3">
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="keyword" th:value="${keyword}"
+                           placeholder="Tìm mã lịch hẹn, tên khách hàng...">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="status">
+                        <option value="">-- Trạng thái --</option>
+                        <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.name()}"
+                                th:selected="${s.name() == selectedStatus?.name()}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control" name="fromDate"
+                           th:value="${fromDate}" placeholder="Từ ngày">
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control" name="toDate"
+                           th:value="${toDate}" placeholder="Đến ngày">
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Tìm</button>
+                    <a th:href="@{/sales/appointments}" class="btn btn-outline-secondary">Xóa</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Mã Lịch Hẹn</th>
+                            <th>Khách Hàng</th>
+                            <th>Loại Dịch Vụ</th>
+                            <th>Ngày Hẹn</th>
+                            <th>Nhân Viên</th>
+                            <th>Showroom</th>
+                            <th>Trạng Thái</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="a, iter : ${appointments}">
+                            <td th:text="${appointments.number * appointments.size + iter.index + 1}"></td>
+                            <td class="font-monospace small fw-semibold" th:text="${a.appointmentCode}"></td>
+                            <td th:text="${a.customer.fullName}"></td>
+                            <td>
+                                <span class="badge bg-info" th:text="${a.serviceType.name()}"></span>
+                            </td>
+                            <td class="small" th:text="${#temporals.format(a.appointmentDate, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td class="small" th:text="${a.employee != null} ? ${a.employee.user.fullName} : '—'"></td>
+                            <td class="small" th:text="${a.showroom != null} ? ${a.showroom.name} : '—'"></td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${a.status.name() == 'COMPLETED'} ? 'bg-success' :
+                                                      (${a.status.name() == 'CANCELLED'} ? 'bg-danger' :
+                                                      (${a.status.name() == 'IN_PROGRESS'} ? 'bg-primary' :
+                                                      (${a.status.name() == 'CONFIRMED'} ? 'bg-info' : 'bg-warning text-dark')))"
+                                      th:text="${a.status.name()}"></span>
+                            </td>
+                            <td>
+                                <a th:href="@{/sales/appointments/{id}(id=${a.id})}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${appointments.empty}">
+                            <td colspan="9" class="text-center text-muted py-4">Chưa có lịch hẹn nào</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <nav th:if="${appointments.totalPages > 1}" class="mt-3">
+            <ul class="pagination">
+                <li class="page-item" th:classappend="${appointments.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/sales/appointments(keyword=${keyword}, status=${selectedStatus?.name()}, fromDate=${fromDate}, toDate=${toDate}, page=${appointments.number - 1})}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, appointments.totalPages - 1)}"
+                    th:classappend="${i == appointments.number} ? 'active'">
+                    <a class="page-link"
+                       th:href="@{/sales/appointments(keyword=${keyword}, status=${selectedStatus?.name()}, fromDate=${fromDate}, toDate=${toDate}, page=${i})}"
+                       th:text="${i + 1}"></a>
+                </li>
+                <li class="page-item" th:classappend="${appointments.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/sales/appointments(keyword=${keyword}, status=${selectedStatus?.name()}, fromDate=${fromDate}, toDate=${toDate}, page=${appointments.number + 1})}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

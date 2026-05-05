@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Khách Hàng | Car Management</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4><i class="fas fa-users me-2 text-primary"></i>Quản Lý Khách Hàng</h4>
+            <a th:href="@{/sales/customers/new}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Thêm Khách Hàng
+            </a>
+        </div>
+
+        <!-- Search -->
+        <form th:action="@{/sales/customers}" method="get" class="mb-3">
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="keyword" th:value="${keyword}"
+                           placeholder="Tìm theo tên, SĐT, email...">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="type">
+                        <option value="">-- Tất cả loại KH --</option>
+                        <option th:each="t : ${types}" th:value="${t.name()}" th:text="${t.name()}"
+                                th:selected="${t == selectedType}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i> Tìm</button>
+                    <a th:href="@{/sales/customers}" class="btn btn-outline-secondary">Xóa lọc</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Mã KH</th>
+                            <th>Họ Tên</th>
+                            <th>Điện Thoại</th>
+                            <th>Email</th>
+                            <th>Loại KH</th>
+                            <th>Điểm TL</th>
+                            <th>Thành Phố</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c, iter : ${customers}">
+                            <td th:text="${customers.number * customers.size + iter.index + 1}"></td>
+                            <td class="font-monospace small" th:text="${c.customerCode}"></td>
+                            <td class="fw-semibold" th:text="${c.fullName}"></td>
+                            <td th:text="${c.phone}"></td>
+                            <td class="small text-muted" th:text="${c.email}"></td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${c.customerType.name() == 'VIP'} ? 'bg-warning text-dark' :
+                                                      (${c.customerType.name() == 'REGULAR'} ? 'bg-primary' : 'bg-info')"
+                                      th:text="${c.customerType.name()}"></span>
+                            </td>
+                            <td th:text="${c.loyaltyPoints}"></td>
+                            <td class="text-muted small" th:text="${c.city}"></td>
+                            <td>
+                                <a th:href="@{/sales/customers/{id}(id=${c.id})}" class="btn btn-sm btn-outline-info me-1">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a th:href="@{/sales/customers/{id}/edit(id=${c.id})}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${customers.empty}">
+                            <td colspan="9" class="text-center text-muted py-4">Không có dữ liệu</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${customers.totalPages > 1}" class="mt-3">
+            <ul class="pagination">
+                <li class="page-item" th:classappend="${customers.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/sales/customers(keyword=${keyword}, type=${selectedType}, page=${customers.number - 1})}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, customers.totalPages - 1)}"
+                    th:classappend="${i == customers.number} ? 'active'">
+                    <a class="page-link" th:href="@{/sales/customers(keyword=${keyword}, type=${selectedType}, page=${i})}"
+                       th:text="${i + 1}"></a>
+                </li>
+                <li class="page-item" th:classappend="${customers.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/sales/customers(keyword=${keyword}, type=${selectedType}, page=${customers.number + 1})}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

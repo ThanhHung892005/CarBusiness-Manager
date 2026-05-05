@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Sales Dashboard | Car Management</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container-fluid">
+        <h4 class="mb-4"><i class="fas fa-handshake me-2 text-primary"></i>Dashboard Nhân Viên Kinh Doanh</h4>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white shadow-sm">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="small opacity-75">Đơn hàng tháng này</div>
+                            <div class="fs-3 fw-bold" th:text="${stats.ordersThisMonth}">0</div>
+                        </div>
+                        <i class="fas fa-file-invoice fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white shadow-sm">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="small opacity-75">Doanh số tháng</div>
+                            <div class="fs-5 fw-bold" th:text="${stats.revenueThisMonth != null} ? ${#numbers.formatDecimal(stats.revenueThisMonth, 0, 'COMMA', 0, 'POINT')} + ' ₫' : '0 ₫'">0 ₫</div>
+                        </div>
+                        <i class="fas fa-money-bill fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white shadow-sm">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="small opacity-75">Xe còn hàng</div>
+                            <div class="fs-3 fw-bold" th:text="${stats.availableVehicles}">0</div>
+                        </div>
+                        <i class="fas fa-car fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">Đơn Hàng Của Tôi</span>
+                        <a th:href="@{/sales/orders}" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="text-center text-muted py-4">
+                            <a th:href="@{/sales/orders}" class="btn btn-primary mt-2">
+                                <i class="fas fa-list me-2"></i>Xem danh sách đơn hàng
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">Thao Tác Nhanh</div>
+                    <div class="card-body d-grid gap-2">
+                        <a th:href="@{/sales/orders/new}" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>Tạo đơn hàng mới
+                        </a>
+                        <a th:href="@{/sales/customers/new}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-plus me-2"></i>Thêm khách hàng
+                        </a>
+                        <a th:href="@{/inventory/vehicles}" class="btn btn-outline-info">
+                            <i class="fas fa-car me-2"></i>Xem kho xe
+                        </a>
+                        <a th:href="@{/sales/appointments/new}" class="btn btn-outline-warning">
+                            <i class="fas fa-calendar-plus me-2"></i>Đặt lịch dịch vụ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

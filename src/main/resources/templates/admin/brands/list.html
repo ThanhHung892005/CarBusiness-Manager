@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Quản Lý Hãng Xe</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4><i class="fas fa-trademark me-2 text-primary"></i>Hãng Xe</h4>
+            <a th:href="@{/admin/brands/new}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Thêm Hãng Xe
+            </a>
+        </div>
+
+        <!-- Search -->
+        <form th:action="@{/admin/brands}" method="get" class="mb-3">
+            <div class="input-group" style="max-width:400px">
+                <input type="text" class="form-control" name="keyword" th:value="${keyword}"
+                       placeholder="Tìm theo tên hãng...">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Tên Hãng</th>
+                            <th>Quốc Gia</th>
+                            <th>Trạng Thái</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="brand, iter : ${brands}">
+                            <td th:text="${brands.number * brands.size + iter.index + 1}"></td>
+                            <td class="fw-semibold" th:text="${brand.name}"></td>
+                            <td th:text="${brand.country}"></td>
+                            <td>
+                                <span class="badge" th:classappend="${brand.active} ? 'bg-success' : 'bg-secondary'"
+                                      th:text="${brand.active} ? 'Hoạt động' : 'Dừng'"></span>
+                            </td>
+                            <td>
+                                <a th:href="@{/admin/brands/{id}/edit(id=${brand.id})}"
+                                   class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form th:action="@{/admin/brands/{id}/delete(id=${brand.id})}"
+                                      method="post" class="d-inline"
+                                      onsubmit="return confirm('Vô hiệu hóa hãng xe này?')">
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${brands.empty}">
+                            <td colspan="5" class="text-center text-muted py-4">Không có dữ liệu</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${brands.totalPages > 1}" class="mt-3">
+            <ul class="pagination">
+                <li class="page-item" th:classappend="${brands.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/brands(keyword=${keyword}, page=${brands.number - 1})}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, brands.totalPages - 1)}"
+                    th:classappend="${i == brands.number} ? 'active'">
+                    <a class="page-link" th:href="@{/admin/brands(keyword=${keyword}, page=${i})}"
+                       th:text="${i + 1}"></a>
+                </li>
+                <li class="page-item" th:classappend="${brands.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/brands(keyword=${keyword}, page=${brands.number + 1})}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Báo Cáo | Car Management</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container-fluid">
+        <h4 class="mb-4"><i class="fas fa-chart-bar me-2 text-success"></i>Báo Cáo & Xuất Dữ Liệu</h4>
+
+        <div class="row g-4">
+            <!-- Vehicle Inventory Report -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-semibold">
+                        <i class="fas fa-car me-2 text-primary"></i>Báo Cáo Tồn Kho Xe
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">
+                            Xuất danh sách toàn bộ xe trong kho bao gồm thông tin hãng, dòng xe, giá nhập, giá bán và trạng thái hiện tại.
+                        </p>
+                        <ul class="list-unstyled text-muted small mb-4">
+                            <li><i class="fas fa-check text-success me-2"></i>Tất cả xe trong hệ thống</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Thông tin hãng, dòng xe, năm sản xuất</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Giá nhập, giá bán, trạng thái</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Showroom lưu trữ</li>
+                        </ul>
+                        <a th:href="@{/manager/reports/inventory.xlsx}" class="btn btn-success w-100">
+                            <i class="fas fa-file-excel me-2"></i>Tải Excel — Tồn Kho
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Report -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-semibold">
+                        <i class="fas fa-chart-line me-2 text-warning"></i>Báo Cáo Doanh Thu Theo Tháng
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">
+                            Xuất báo cáo doanh thu theo từng tháng trong năm, tính từ các đơn hàng có trạng thái COMPLETED.
+                        </p>
+                        <ul class="list-unstyled text-muted small mb-3">
+                            <li><i class="fas fa-check text-success me-2"></i>Doanh thu theo 12 tháng</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Tỷ lệ phần trăm mỗi tháng</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Tổng doanh thu cả năm</li>
+                        </ul>
+                        <form th:action="@{/manager/reports/revenue.xlsx}" method="get" class="d-flex gap-2">
+                            <select name="year" class="form-select">
+                                <option th:each="y : ${#numbers.sequence(currentYear, currentYear - 4, -1)}"
+                                        th:value="${y}" th:text="${y}"
+                                        th:selected="${y == currentYear}"></option>
+                            </select>
+                            <button type="submit" class="btn btn-warning text-white text-nowrap">
+                                <i class="fas fa-file-excel me-2"></i>Tải Excel
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info box -->
+        <div class="alert alert-info mt-4">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Lưu ý:</strong> File Excel được tạo theo thời gian thực dựa trên dữ liệu hiện tại trong hệ thống.
+            Doanh thu chỉ tính các đơn hàng có trạng thái <strong>COMPLETED</strong>.
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

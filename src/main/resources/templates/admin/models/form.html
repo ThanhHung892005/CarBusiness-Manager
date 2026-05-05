@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title th:text="${carModel.id == null} ? 'Thêm Dòng Xe | Car Management' : 'Chỉnh Sửa Dòng Xe | Car Management'"></title></head>
+<body>
+<main th:fragment="main">
+    <div class="container" style="max-width:700px">
+        <div class="d-flex align-items-center mb-4">
+            <a th:href="@{/admin/models}" class="btn btn-sm btn-outline-secondary me-3"><i class="fas fa-arrow-left"></i></a>
+            <h4 class="mb-0" th:text="${carModel.id == null} ? 'Thêm Dòng Xe' : 'Chỉnh Sửa Dòng Xe'"></h4>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form th:action="${carModel.id == null} ? @{/admin/models} : @{/admin/models/{id}(id=${carModel.id})}"
+                      th:object="${carModel}" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Tên dòng xe <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" th:field="*{name}" placeholder="VD: Camry" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Năm sản xuất <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" th:field="*{year}" min="1990" max="2035" placeholder="2024" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Hãng xe <span class="text-danger">*</span></label>
+                            <select class="form-select" name="brand.id" required>
+                                <option value="">-- Chọn hãng --</option>
+                                <option th:each="b : ${brands}" th:value="${b.id}" th:text="${b.name}"
+                                        th:selected="${carModel.brand != null and carModel.brand.id == b.id}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Loại xe <span class="text-danger">*</span></label>
+                            <select class="form-select" th:field="*{carType}" required>
+                                <option value="">-- Chọn loại --</option>
+                                <option th:each="t : ${carTypes}" th:value="${t.name()}" th:text="${t.name()}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Động cơ</label>
+                            <input type="text" class="form-control" th:field="*{engine}" placeholder="VD: 2.5L 4-cylinder">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Hộp số</label>
+                            <input type="text" class="form-control" th:field="*{transmission}" placeholder="VD: Số tự động 8 cấp">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nhiên liệu</label>
+                            <input type="text" class="form-control" th:field="*{fuelType}" placeholder="VD: Xăng / Điện / Hybrid">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Số ghế</label>
+                            <input type="number" class="form-control" th:field="*{seats}" min="2" max="9">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end" th:if="${carModel.id != null}">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" th:field="*{active}" id="active">
+                                <label class="form-check-label" for="active">Đang hoạt động</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Giá cơ bản</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" th:field="*{basePrice}" min="0" step="1000000" placeholder="0">
+                                <span class="input-group-text">₫</span>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Mô tả</label>
+                            <textarea class="form-control" th:field="*{description}" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Lưu</button>
+                        <a th:href="@{/admin/models}" class="btn btn-outline-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

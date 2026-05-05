@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title th:text="${showroom.id == null} ? 'Thêm Showroom | Car Management' : 'Chỉnh Sửa Showroom | Car Management'"></title></head>
+<body>
+<main th:fragment="main">
+    <div class="container" style="max-width:650px">
+        <div class="d-flex align-items-center mb-4">
+            <a th:href="@{/admin/showrooms}" class="btn btn-sm btn-outline-secondary me-3"><i class="fas fa-arrow-left"></i></a>
+            <h4 class="mb-0" th:text="${showroom.id == null} ? 'Thêm Showroom' : 'Chỉnh Sửa Showroom'"></h4>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form th:action="${showroom.id == null} ? @{/admin/showrooms} : @{/admin/showrooms/{id}(id=${showroom.id})}"
+                      th:object="${showroom}" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Mã Showroom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control text-uppercase" th:field="*{code}" placeholder="SR001" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Tên Showroom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" th:field="*{name}" placeholder="Toyota Hà Nội" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Địa chỉ <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" th:field="*{address}" placeholder="Số nhà, đường..." required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Thành phố</label>
+                            <input type="text" class="form-control" th:field="*{city}" placeholder="Hà Nội">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Điện thoại</label>
+                            <input type="tel" class="form-control" th:field="*{phone}" placeholder="024 1234 5678">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="email" class="form-control" th:field="*{email}" placeholder="showroom@example.com">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end" th:if="${showroom.id != null}">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" th:field="*{active}" id="active">
+                                <label class="form-check-label" for="active">Đang hoạt động</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Lưu</button>
+                        <a th:href="@{/admin/showrooms}" class="btn btn-outline-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

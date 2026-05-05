@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Chi Tiết Lịch Hẹn | Car Management</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container" style="max-width:800px">
+        <div class="d-flex align-items-center mb-4">
+            <a th:href="@{/sales/appointments}" class="btn btn-sm btn-outline-secondary me-3"><i class="fas fa-arrow-left"></i></a>
+            <h4 class="mb-0 me-3" th:text="${appointment.appointmentCode}"></h4>
+            <span class="badge fs-6"
+                  th:classappend="${appointment.status.name() == 'COMPLETED'} ? 'bg-success' :
+                                  (${appointment.status.name() == 'CANCELLED'} ? 'bg-danger' :
+                                  (${appointment.status.name() == 'IN_PROGRESS'} ? 'bg-primary' :
+                                  (${appointment.status.name() == 'CONFIRMED'} ? 'bg-info' : 'bg-warning text-dark')))"
+                  th:text="${appointment.status.name()}"></span>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-7">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header fw-semibold"><i class="fas fa-info-circle me-2"></i>Thông Tin Lịch Hẹn</div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4 text-muted">Khách hàng</dt>
+                            <dd class="col-sm-8" th:text="${appointment.customer.fullName}"></dd>
+
+                            <dt class="col-sm-4 text-muted">Điện thoại</dt>
+                            <dd class="col-sm-8" th:text="${appointment.customer.phone}"></dd>
+
+                            <dt class="col-sm-4 text-muted">Xe</dt>
+                            <dd class="col-sm-8">
+                                <span th:text="${appointment.vehicle.carModel.brand.name} + ' ' + ${appointment.vehicle.carModel.name}"></span>
+                                <span class="text-muted small ms-1" th:text="'(' + ${appointment.vehicle.vin} + ')'"></span>
+                            </dd>
+
+                            <dt class="col-sm-4 text-muted">Loại dịch vụ</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge bg-info" th:text="${appointment.serviceType.name()}"></span>
+                            </dd>
+
+                            <dt class="col-sm-4 text-muted">Ngày hẹn</dt>
+                            <dd class="col-sm-8 fw-semibold"
+                                th:text="${#temporals.format(appointment.appointmentDate, 'dd/MM/yyyy HH:mm')}"></dd>
+
+                            <dt class="col-sm-4 text-muted">Nhân viên</dt>
+                            <dd class="col-sm-8"
+                                th:text="${appointment.employee != null} ? ${appointment.employee.user.fullName} : '—'"></dd>
+
+                            <dt class="col-sm-4 text-muted">Showroom</dt>
+                            <dd class="col-sm-8"
+                                th:text="${appointment.showroom != null} ? ${appointment.showroom.name} : '—'"></dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm" th:if="${appointment.description != null and !#strings.isEmpty(appointment.description)}">
+                    <div class="card-header fw-semibold"><i class="fas fa-clipboard me-2"></i>Mô Tả Yêu Cầu</div>
+                    <div class="card-body">
+                        <p class="mb-0" th:text="${appointment.description}"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold"><i class="fas fa-exchange-alt me-2"></i>Cập Nhật Trạng Thái</div>
+                    <div class="card-body">
+                        <form th:action="@{/sales/appointments/{id}/status(id=${appointment.id})}" method="post">
+                            <div class="mb-3">
+                                <select class="form-select" name="status">
+                                    <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.name()}"
+                                            th:selected="${s == appointment.status}"></option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-save me-1"></i>Lưu Trạng Thái
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mt-3" th:if="${appointment.notes != null and !#strings.isEmpty(appointment.notes)}">
+                    <div class="card-header fw-semibold">Ghi Chú</div>
+                    <div class="card-body">
+                        <p class="text-muted mb-0" th:text="${appointment.notes}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

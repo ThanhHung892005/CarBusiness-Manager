@@ -1,0 +1,39 @@
+# Maven
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.project
+*.classpath
+.settings/
+
+# Credentials - NEVER commit these
+application-dev.properties
+application-local.properties
+*.env
+.env
+
+# Uploads
+uploads/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# JaCoCo
+jacoco.exec
+
+# Spring Boot
+HELP.md
+
+# Claude Code
+.claude/

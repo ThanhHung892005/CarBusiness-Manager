@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title th:text="${vehicleId == null} ? 'Thêm Xe Mới | Car Management' : 'Chỉnh Sửa Xe | Car Management'"></title></head>
+<body>
+<main th:fragment="main">
+    <div class="container" style="max-width:800px">
+        <div class="d-flex align-items-center mb-4">
+            <a th:href="@{/inventory/vehicles}" class="btn btn-sm btn-outline-secondary me-3">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h4 class="mb-0" th:text="${vehicleId == null} ? 'Thêm Xe Mới' : 'Chỉnh Sửa Xe'"></h4>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form th:action="${vehicleId == null} ? @{/inventory/vehicles} : @{/inventory/vehicles/{id}(id=${vehicleId})}"
+                      th:object="${vehicle}" method="post" enctype="multipart/form-data">
+
+                    <div class="row g-3">
+                        <!-- VIN -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Số VIN <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control font-monospace text-uppercase" th:field="*{vin}"
+                                   th:classappend="${#fields.hasErrors('vin')} ? 'is-invalid'"
+                                   maxlength="17" placeholder="17 ký tự" style="text-transform:uppercase">
+                            <div class="invalid-feedback" th:errors="*{vin}"></div>
+                            <div class="form-text">Phải đúng 17 ký tự, chữ hoa tự động.</div>
+                        </div>
+
+                        <!-- Brand -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Hãng xe <span class="text-danger">*</span></label>
+                            <select class="form-select" id="brandSelect">
+                                <option value="">-- Chọn hãng xe --</option>
+                                <option th:each="b : ${brands}" th:value="${b.id}" th:text="${b.name}"
+                                        th:selected="${b.id == selectedBrandId}"></option>
+                            </select>
+                        </div>
+
+                        <!-- Car Model -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Dòng xe <span class="text-danger">*</span></label>
+                            <select class="form-select" th:field="*{carModelId}" id="modelSelect"
+                                    th:classappend="${#fields.hasErrors('carModelId')} ? 'is-invalid'" required>
+                                <option value="">-- Chọn dòng xe --</option>
+                            </select>
+                            <div class="invalid-feedback" th:errors="*{carModelId}"></div>
+                        </div>
+
+                        <!-- Showroom -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Showroom</label>
+                            <select class="form-select" th:field="*{showroomId}">
+                                <option value="">-- Không xác định --</option>
+                                <option th:each="s : ${showrooms}" th:value="${s.id}" th:text="${s.name}"></option>
+                            </select>
+                        </div>
+
+                        <!-- Color -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Màu xe <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" th:field="*{color}"
+                                   th:classappend="${#fields.hasErrors('color')} ? 'is-invalid'"
+                                   placeholder="VD: Trắng ngọc trai">
+                            <div class="invalid-feedback" th:errors="*{color}"></div>
+                        </div>
+
+                        <!-- Color Code -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Mã màu</label>
+                            <input type="text" class="form-control" th:field="*{colorCode}" placeholder="#FFFFFF">
+                        </div>
+
+                        <!-- Import Price -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Giá nhập <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" th:field="*{importPrice}"
+                                       th:classappend="${#fields.hasErrors('importPrice')} ? 'is-invalid'"
+                                       min="0" step="1000000" placeholder="0">
+                                <span class="input-group-text">₫</span>
+                            </div>
+                            <div class="invalid-feedback d-block" th:errors="*{importPrice}"></div>
+                        </div>
+
+                        <!-- Selling Price -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Giá bán <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" th:field="*{sellingPrice}"
+                                       th:classappend="${#fields.hasErrors('sellingPrice')} ? 'is-invalid'"
+                                       min="0" step="1000000" placeholder="0">
+                                <span class="input-group-text">₫</span>
+                            </div>
+                            <div class="invalid-feedback d-block" th:errors="*{sellingPrice}"></div>
+                        </div>
+
+                        <!-- Import Date -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Ngày nhập kho</label>
+                            <input type="date" class="form-control" th:field="*{importDate}">
+                        </div>
+
+                        <!-- Images (create only) -->
+                        <div class="col-md-12" th:if="${vehicleId == null}">
+                            <label class="form-label fw-semibold">Ảnh xe</label>
+                            <input type="file" class="form-control" name="images" multiple accept="image/*" id="imageInput">
+                            <div class="form-text">Chọn nhiều ảnh cùng lúc. Ảnh đầu tiên sẽ là ảnh chính.</div>
+                            <div id="imagePreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Ghi chú</label>
+                            <textarea class="form-control" th:field="*{notes}" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Lưu
+                        </button>
+                        <a th:href="@{/inventory/vehicles}" class="btn btn-outline-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts">
+<script th:inline="javascript">
+    const BRAND_MODELS_URL = /*[[@{/inventory/vehicles/brands}]]*/ '/inventory/vehicles/brands';
+    const selectedModelId = /*[[${vehicle.carModelId}]]*/ null;
+
+    function loadModels(brandId, preselect) {
+        const $sel = $('#modelSelect');
+        $sel.html('<option value="">-- Chọn dòng xe --</option>');
+        if (!brandId) return;
+        $.getJSON(BRAND_MODELS_URL + '/' + brandId + '/models', function(models) {
+            models.forEach(function(m) {
+                const opt = $('<option>').val(m.id).text(m.name);
+                if (preselect && m.id == preselect) opt.prop('selected', true);
+                $sel.append(opt);
+            });
+        });
+    }
+
+    $(document).ready(function() {
+        // VIN uppercase
+        $('#vin, input[name="vin"]').on('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        // Brand change → load models
+        $('#brandSelect').on('change', function() {
+            loadModels($(this).val(), null);
+        });
+
+        // On page load: if editing, load models for pre-selected brand
+        const initBrand = $('#brandSelect').val();
+        if (initBrand) {
+            loadModels(initBrand, selectedModelId);
+        }
+
+        // Image preview
+        $('#imageInput').on('change', function() {
+            const $preview = $('#imagePreview');
+            $preview.empty();
+            Array.from(this.files).forEach(function(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $preview.append('<img src="' + e.target.result + '" style="width:120px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6">');
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    });
+</script>
+</th:block>
+</body>
+</html>

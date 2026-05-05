@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title th:text="${customer.fullName} + ' | Car Management'"></title></head>
+<body>
+<main th:fragment="main">
+    <div class="container">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <a th:href="@{/sales/customers}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h4 class="mb-0" th:text="${customer.fullName}"></h4>
+                    <small class="text-muted font-monospace" th:text="${customer.customerCode}"></small>
+                </div>
+                <span class="badge fs-6"
+                      th:classappend="${customer.customerType.name() == 'VIP'} ? 'bg-warning text-dark' :
+                                      (${customer.customerType.name() == 'REGULAR'} ? 'bg-primary' : 'bg-info')"
+                      th:text="${customer.customerType.name()}"></span>
+            </div>
+            <a th:href="@{/sales/customers/{id}/edit(id=${customer.id})}" class="btn btn-outline-primary">
+                <i class="fas fa-edit me-1"></i>Chỉnh sửa
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Contact Info -->
+            <div class="col-md-5">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header fw-semibold"><i class="fas fa-address-card me-2 text-primary"></i>Thông Tin Liên Hệ</div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <tr>
+                                <td class="text-muted" style="width:40%">Điện thoại</td>
+                                <td class="fw-semibold" th:text="${customer.phone}"></td>
+                            </tr>
+                            <tr th:if="${customer.email != null and !customer.email.blank}">
+                                <td class="text-muted">Email</td>
+                                <td th:text="${customer.email}"></td>
+                            </tr>
+                            <tr th:if="${customer.address != null and !customer.address.blank}">
+                                <td class="text-muted">Địa chỉ</td>
+                                <td th:text="${customer.address}"></td>
+                            </tr>
+                            <tr th:if="${customer.city != null and !customer.city.blank}">
+                                <td class="text-muted">Thành phố</td>
+                                <td th:text="${customer.city}"></td>
+                            </tr>
+                            <tr th:if="${customer.idNumber != null and !customer.idNumber.blank}">
+                                <td class="text-muted">CMND/CCCD</td>
+                                <td th:text="${customer.idNumber}"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Corporate Info -->
+                <div class="card shadow-sm mb-3" th:if="${customer.isCorporate}">
+                    <div class="card-header fw-semibold"><i class="fas fa-building me-2 text-info"></i>Thông Tin Doanh Nghiệp</div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <tr th:if="${customer.companyName != null}">
+                                <td class="text-muted" style="width:40%">Công ty</td>
+                                <td class="fw-semibold" th:text="${customer.companyName}"></td>
+                            </tr>
+                            <tr th:if="${customer.taxCode != null}">
+                                <td class="text-muted">Mã số thuế</td>
+                                <td th:text="${customer.taxCode}"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Loyalty -->
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold"><i class="fas fa-star me-2 text-warning"></i>Điểm Tích Lũy</div>
+                    <div class="card-body text-center">
+                        <div class="display-4 fw-bold text-warning" th:text="${customer.loyaltyPoints}"></div>
+                        <div class="text-muted">điểm</div>
+                        <div class="mt-2">
+                            <span class="badge fs-6"
+                                  th:classappend="${customer.customerType.name() == 'VIP'} ? 'bg-warning text-dark' :
+                                                  (${customer.customerType.name() == 'REGULAR'} ? 'bg-primary' : 'bg-info')"
+                                  th:text="${customer.customerType.name()}"></span>
+                        </div>
+                        <div class="form-text mt-1" th:if="${customer.notes != null and !customer.notes.blank}" th:text="${customer.notes}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders -->
+            <div class="col-md-7">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold"><i class="fas fa-receipt me-2 text-success"></i>Lịch Sử Mua Hàng</span>
+                        <a th:href="@{/sales/orders/new}" class="btn btn-sm btn-success">
+                            <i class="fas fa-plus me-1"></i>Tạo đơn
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div th:if="${orders != null and !orders.empty}">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Mã đơn</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="o : ${orders}">
+                                        <td class="font-monospace small" th:text="${o.orderCode}"></td>
+                                        <td class="small" th:text="${#temporals.format(o.orderDate, 'dd/MM/yyyy')}"></td>
+                                        <td class="fw-semibold small" th:text="${#numbers.formatDecimal(o.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                                        <td>
+                                            <span class="badge"
+                                                  th:classappend="${o.status.name() == 'COMPLETED'} ? 'bg-success' :
+                                                                  (${o.status.name() == 'CANCELLED'} ? 'bg-danger' :
+                                                                  (${o.status.name() == 'CONFIRMED'} ? 'bg-info' : 'bg-warning text-dark'))"
+                                                  th:text="${o.status.name()}"></span>
+                                        </td>
+                                        <td>
+                                            <a th:href="@{/sales/orders/{id}(id=${o.id})}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div th:if="${orders == null or orders.empty}" class="text-center text-muted py-4">
+                            <i class="fas fa-receipt fa-2x mb-2"></i>
+                            <p>Chưa có đơn hàng nào</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

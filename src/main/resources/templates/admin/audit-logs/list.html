@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Audit Log | Car Management</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container-fluid">
+        <h4 class="mb-4"><i class="fas fa-history me-2 text-secondary"></i>Nhật Ký Hệ Thống (Audit Log)</h4>
+
+        <!-- Filter Form -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form th:action="@{/admin/audit-logs}" method="get" class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Username</label>
+                        <input type="text" name="username" class="form-control form-control-sm"
+                               placeholder="Tìm theo username..." th:value="${username}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Hành động</label>
+                        <select name="action" class="form-select form-select-sm">
+                            <option value="">-- Tất cả --</option>
+                            <option th:each="a : ${actions}"
+                                    th:value="${a.name()}"
+                                    th:text="${a.name()}"
+                                    th:selected="${a == selectedAction}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-auto">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-search me-1"></i>Lọc
+                        </button>
+                        <a th:href="@{/admin/audit-logs}" class="btn btn-outline-secondary btn-sm ms-1">
+                            <i class="fas fa-redo me-1"></i>Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">
+                    Kết quả: <span class="text-primary" th:text="${logs.totalElements}">0</span> bản ghi
+                </span>
+                <small class="text-muted">Trang <span th:text="${logs.number + 1}"></span> / <span th:text="${logs.totalPages > 0 ? logs.totalPages : 1}"></span></small>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0" th:if="${!logs.empty}">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width:160px">Thời gian</th>
+                                <th style="width:120px">Username</th>
+                                <th style="width:100px">Hành động</th>
+                                <th style="width:120px">Đối tượng</th>
+                                <th style="width:80px">ID</th>
+                                <th>Mô tả</th>
+                                <th style="width:120px">IP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="log : ${logs.content}">
+                                <td class="small font-monospace text-muted"
+                                    th:text="${#temporals.format(log.createdAt, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                                <td>
+                                    <span class="badge bg-secondary" th:text="${log.username}"></span>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${log.action.name() == 'DELETE'} ? 'bg-danger' :
+                                                          (${log.action.name() == 'CREATE'} ? 'bg-success' :
+                                                          (${log.action.name() == 'LOGIN'} ? 'bg-info' :
+                                                          (${log.action.name() == 'EXPORT'} ? 'bg-warning text-dark' : 'bg-primary')))"
+                                          th:text="${log.action.name()}"></span>
+                                </td>
+                                <td class="small" th:text="${log.entityType}"></td>
+                                <td class="small font-monospace" th:text="${log.entityId}"></td>
+                                <td class="small" th:text="${log.description}"></td>
+                                <td class="small text-muted font-monospace" th:text="${log.ipAddress}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="text-center text-muted py-5" th:if="${logs.empty}">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                        Không có bản ghi nào
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="card-footer" th:if="${logs.totalPages > 1}">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0 justify-content-center">
+                        <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
+                            <a class="page-link"
+                               th:href="@{/admin/audit-logs(username=${username},action=${selectedAction},page=${logs.number - 1})}">
+                                &laquo;
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, logs.totalPages - 1)}"
+                            th:classappend="${i == logs.number} ? 'active'">
+                            <a class="page-link"
+                               th:href="@{/admin/audit-logs(username=${username},action=${selectedAction},page=${i})}"
+                               th:text="${i + 1}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
+                            <a class="page-link"
+                               th:href="@{/admin/audit-logs(username=${username},action=${selectedAction},page=${logs.number + 1})}">
+                                &raquo;
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head>
+    <title th:text="${userId == null} ? 'Thêm Người Dùng | Car Management' : 'Chỉnh Sửa Người Dùng | Car Management'"></title>
+</head>
+<body>
+<main th:fragment="main">
+    <div class="container" style="max-width:680px">
+        <div class="d-flex align-items-center mb-4">
+            <a th:href="@{/admin/users}" class="btn btn-sm btn-outline-secondary me-3">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h4 class="mb-0" th:text="${userId == null} ? 'Thêm Người Dùng' : 'Chỉnh Sửa: ' + ${editUsername}"></h4>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form th:action="${userId == null} ? @{/admin/users} : @{/admin/users/{id}(id=${userId})}"
+                      th:object="${userRequest}" method="post">
+
+                    <!-- Username -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên đăng nhập <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control font-monospace"
+                               th:field="*{username}"
+                               th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'"
+                               th:readonly="${userId != null}"
+                               placeholder="Tối thiểu 4 ký tự, chỉ chữ cái/số/_">
+                        <div class="invalid-feedback" th:errors="*{username}"></div>
+                        <div class="form-text" th:if="${userId != null}">Không thể thay đổi tên đăng nhập.</div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control"
+                               th:field="*{email}"
+                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"
+                               placeholder="example@email.com">
+                        <div class="invalid-feedback" th:errors="*{email}"></div>
+                    </div>
+
+                    <!-- Full Name -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Họ và tên <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control"
+                               th:field="*{fullName}"
+                               th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid'"
+                               placeholder="Nguyễn Văn A">
+                        <div class="invalid-feedback" th:errors="*{fullName}"></div>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số điện thoại</label>
+                        <input type="text" class="form-control"
+                               th:field="*{phone}"
+                               th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid'"
+                               placeholder="0912345678 (tuỳ chọn)">
+                        <div class="invalid-feedback" th:errors="*{phone}"></div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Mật khẩu
+                            <span class="text-danger" th:if="${userId == null}">*</span>
+                            <span class="text-muted fw-normal small" th:if="${userId != null}">(để trống = giữ nguyên)</span>
+                        </label>
+                        <input type="password" class="form-control"
+                               th:field="*{password}"
+                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
+                               placeholder="Tối thiểu 8 ký tự">
+                        <div class="invalid-feedback" th:errors="*{password}"></div>
+                        <div class="form-text" th:if="${userId == null}">Tối thiểu 8 ký tự</div>
+                    </div>
+
+                    <!-- Roles -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Vai trò <span class="text-danger">*</span></label>
+                        <div class="border rounded p-3"
+                             th:classappend="${#fields.hasErrors('roleIds')} ? 'border-danger'">
+                            <div class="form-check" th:each="role : ${roles}">
+                                <input type="checkbox" class="form-check-input"
+                                       th:id="'role_' + ${role.id}"
+                                       name="roleIds"
+                                       th:value="${role.id}"
+                                       th:checked="${userRequest.roleIds != null and userRequest.roleIds.contains(role.id)}">
+                                <label class="form-check-label" th:for="'role_' + ${role.id}">
+                                    <span th:text="${role.name.replace('ROLE_','')}"></span>
+                                    <small class="text-muted" th:if="${role.description != null}"
+                                           th:text="' — ' + ${role.description}"></small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('roleIds')}" th:errors="*{roleIds}"></div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Trạng thái tài khoản</label>
+                        <div class="d-flex gap-4">
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="enabled" value="false">
+                                <input class="form-check-input" type="checkbox" id="enabled"
+                                       name="enabled" value="true"
+                                       th:checked="${userRequest.enabled}">
+                                <label class="form-check-label" for="enabled">
+                                    <i class="fas fa-check-circle text-success me-1"></i>Kích hoạt
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="locked" value="false">
+                                <input class="form-check-input" type="checkbox" id="locked"
+                                       name="locked" value="true"
+                                       th:checked="${userRequest.locked}">
+                                <label class="form-check-label" for="locked">
+                                    <i class="fas fa-lock text-danger me-1"></i>Khoá tài khoản
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Lưu
+                        </button>
+                        <a th:href="@{/admin/users}" class="btn btn-outline-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

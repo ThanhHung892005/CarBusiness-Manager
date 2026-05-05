@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: car_management_db
+    environment:
+      POSTGRES_DB: car_management
+      POSTGRES_USER: caruser
+      POSTGRES_PASSWORD: carpassword123
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U caruser -d car_management"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: car_management_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@carmanagement.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8888:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

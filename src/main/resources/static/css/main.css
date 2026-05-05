@@ -1,0 +1,87 @@
+/* Car Management System - Main Styles */
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Navbar */
+.navbar-brand {
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+}
+
+/* Tables */
+.table th {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 6px;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.6rem;
+}
+
+/* Forms */
+.form-control, .form-select {
+    border-radius: 6px;
+}
+
+.form-label {
+    font-size: 0.9rem;
+}
+
+/* Pagination */
+.page-link {
+    color: #0d6efd;
+    border-radius: 6px !important;
+    margin: 0 2px;
+}
+
+.page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Stat Cards */
+.card.bg-primary, .card.bg-success, .card.bg-warning, .card.bg-info {
+    border-radius: 12px;
+}
+
+/* Footer */
+.footer {
+    font-size: 0.85rem;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+    .table-responsive { overflow-x: auto; }
+}

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Kho Xe</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4><i class="fas fa-car me-2 text-primary"></i>Quản Lý Kho Xe</h4>
+            <a sec:authorize="hasAnyRole('ADMIN','MANAGER')"
+               th:href="@{/inventory/vehicles/new}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Thêm Xe
+            </a>
+        </div>
+
+        <!-- Search Form -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <form th:action="@{/inventory/vehicles}" method="get" class="row g-2">
+                    <div class="col-md-2">
+                        <select class="form-select" name="brandId">
+                            <option value="">-- Hãng xe --</option>
+                            <option th:each="b : ${brands}" th:value="${b.id}" th:text="${b.name}"
+                                    th:selected="${b.id == search.brandId}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" name="status">
+                            <option value="">-- Trạng thái --</option>
+                            <option value="AVAILABLE" th:selected="${search.status?.name() == 'AVAILABLE'}">Sẵn sàng</option>
+                            <option value="RESERVED" th:selected="${search.status?.name() == 'RESERVED'}">Đã đặt</option>
+                            <option value="SOLD" th:selected="${search.status?.name() == 'SOLD'}">Đã bán</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" name="showroomId">
+                            <option value="">-- Showroom --</option>
+                            <option th:each="s : ${showrooms}" th:value="${s.id}" th:text="${s.name}"
+                                    th:selected="${s.id == search.showroomId}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" class="form-control" name="color" th:value="${search.color}" placeholder="Màu sắc">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" type="submit"><i class="fas fa-search me-1"></i>Tìm</button>
+                    </div>
+                    <div class="col-md-2">
+                        <a th:href="@{/inventory/vehicles}" class="btn btn-outline-secondary w-100">Xóa Lọc</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Vehicle Table -->
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>VIN</th>
+                            <th>Hãng / Dòng Xe</th>
+                            <th>Năm</th>
+                            <th>Màu</th>
+                            <th>Giá Bán</th>
+                            <th>Showroom</th>
+                            <th>Trạng Thái</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="v : ${vehicles}">
+                            <td class="font-monospace small" th:text="${v.vin}"></td>
+                            <td>
+                                <div class="fw-semibold" th:text="${v.carModel.brand.name} + ' ' + ${v.carModel.name}"></div>
+                                <small class="text-muted" th:text="${v.carModel.carType}"></small>
+                            </td>
+                            <td th:text="${v.carModel.year}"></td>
+                            <td>
+                                <span class="badge bg-secondary" th:text="${v.color}"></span>
+                            </td>
+                            <td class="text-end fw-semibold"
+                                th:text="${#numbers.formatDecimal(v.sellingPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                            <td th:text="${v.showroom?.name ?: '—'}"></td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${v.status.name() == 'AVAILABLE'} ? 'bg-success' : (${v.status.name() == 'SOLD'} ? 'bg-secondary' : 'bg-warning')"
+                                      th:text="${v.status}"></span>
+                            </td>
+                            <td>
+                                <a th:href="@{/inventory/vehicles/{id}(id=${v.id})}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${vehicles.empty}">
+                            <td colspan="8" class="text-center text-muted py-4">Không có xe nào phù hợp</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${vehicles.totalPages > 1}" class="mt-3">
+            <ul class="pagination">
+                <li class="page-item" th:classappend="${vehicles.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/inventory/vehicles(page=${vehicles.number - 1})}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, vehicles.totalPages - 1)}"
+                    th:classappend="${i == vehicles.number} ? 'active'">
+                    <a class="page-link" th:href="@{/inventory/vehicles(page=${i})}" th:text="${i + 1}"></a>
+                </li>
+                <li class="page-item" th:classappend="${vehicles.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/inventory/vehicles(page=${vehicles.number + 1})}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

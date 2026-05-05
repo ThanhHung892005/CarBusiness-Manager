@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title th:text="${vehicle.vin} + ' | Car Management'"></title></head>
+<body>
+<main th:fragment="main">
+    <div class="container">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <a th:href="@{/inventory/vehicles}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h4 class="mb-0 font-monospace" th:text="${vehicle.vin}"></h4>
+                    <small class="text-muted" th:text="${vehicle.carModel.brand.name} + ' ' + ${vehicle.carModel.name} + ' (' + ${vehicle.carModel.year} + ')'"></small>
+                </div>
+                <span class="badge fs-6"
+                      th:classappend="${vehicle.status.name() == 'AVAILABLE'} ? 'bg-success' :
+                                      (${vehicle.status.name() == 'SOLD'} ? 'bg-secondary' :
+                                      (${vehicle.status.name() == 'RESERVED'} ? 'bg-warning text-dark' : 'bg-info'))"
+                      th:text="${vehicle.status.name()}"></span>
+            </div>
+            <div sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+                <a th:href="@{/inventory/vehicles/{id}/edit(id=${vehicle.id})}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit me-1"></i>Chỉnh sửa
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Image Gallery -->
+            <div class="col-md-7">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div th:if="${vehicle.images != null and !vehicle.images.empty}">
+                            <!-- Main image -->
+                            <img th:src="@{${vehicle.images[0].url}}" id="mainImg"
+                                 class="w-100 mb-2" style="height:320px;object-fit:cover;border-radius:8px">
+                            <!-- Thumbnails -->
+                            <div class="d-flex flex-wrap gap-2">
+                                <img th:each="img : ${vehicle.images}"
+                                     th:src="@{${img.url}}"
+                                     onclick="document.getElementById('mainImg').src=this.src"
+                                     class="rounded" style="width:80px;height:60px;object-fit:cover;cursor:pointer;border:2px solid #dee2e6">
+                            </div>
+                        </div>
+                        <div th:if="${vehicle.images == null or vehicle.images.empty}"
+                             class="d-flex align-items-center justify-content-center bg-light rounded"
+                             style="height:320px">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-car fa-4x mb-2"></i>
+                                <p>Chưa có ảnh</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div class="col-md-5">
+                <!-- Car Info -->
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header fw-semibold"><i class="fas fa-info-circle me-2 text-primary"></i>Thông Tin Xe</div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <tr>
+                                <td class="text-muted" style="width:45%">Hãng xe</td>
+                                <td class="fw-semibold" th:text="${vehicle.carModel.brand.name}"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Dòng xe</td>
+                                <td th:text="${vehicle.carModel.name}"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Năm sản xuất</td>
+                                <td th:text="${vehicle.carModel.year}"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Loại xe</td>
+                                <td th:text="${vehicle.carModel.carType}"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Màu</td>
+                                <td>
+                                    <span th:text="${vehicle.color}"></span>
+                                    <small class="text-muted" th:if="${vehicle.colorCode}" th:text="'(' + ${vehicle.colorCode} + ')'"></small>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Số ghế</td>
+                                <td th:text="${vehicle.carModel.seats != null} ? ${vehicle.carModel.seats} + ' ghế' : '—'"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Động cơ</td>
+                                <td th:text="${vehicle.carModel.engine != null} ? ${vehicle.carModel.engine} : '—'"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Hộp số</td>
+                                <td th:text="${vehicle.carModel.transmission != null} ? ${vehicle.carModel.transmission} : '—'"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Showroom</td>
+                                <td th:text="${vehicle.showroom != null} ? ${vehicle.showroom.name} : 'Chưa phân bổ'"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Financial Info -->
+                <div class="card shadow-sm mb-3" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+                    <div class="card-header fw-semibold"><i class="fas fa-dollar-sign me-2 text-success"></i>Thông Tin Tài Chính</div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <tr>
+                                <td class="text-muted">Giá nhập</td>
+                                <td class="fw-semibold" th:text="${#numbers.formatDecimal(vehicle.importPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Giá bán</td>
+                                <td class="fw-semibold text-success" th:text="${#numbers.formatDecimal(vehicle.sellingPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Biên lợi nhuận</td>
+                                <td class="fw-semibold text-info"
+                                    th:text="${#numbers.formatDecimal(vehicle.sellingPrice - vehicle.importPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Stock Info -->
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold"><i class="fas fa-warehouse me-2 text-warning"></i>Tình Trạng Kho</div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <tr>
+                                <td class="text-muted">Ngày nhập kho</td>
+                                <td th:text="${vehicle.importDate != null} ? ${#temporals.format(vehicle.importDate, 'dd/MM/yyyy')} : '—'"></td>
+                            </tr>
+                            <tr th:if="${vehicle.importDate != null}">
+                                <td class="text-muted">Ngày nằm kho</td>
+                                <td>
+                                    <span th:text="${#temporals.days(#temporals.createToday()) - #temporals.days(vehicle.importDate) >= 0} ?
+                                        (T(java.time.temporal.ChronoUnit).DAYS.between(vehicle.importDate, T(java.time.LocalDate).now()) + ' ngày') : '—'"></span>
+                                </td>
+                            </tr>
+                            <tr th:if="${vehicle.soldDate != null}">
+                                <td class="text-muted">Ngày bán</td>
+                                <td th:text="${#temporals.format(vehicle.soldDate, 'dd/MM/yyyy')}"></td>
+                            </tr>
+                            <tr th:if="${vehicle.notes != null and !vehicle.notes.blank}">
+                                <td class="text-muted">Ghi chú</td>
+                                <td th:text="${vehicle.notes}"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>
