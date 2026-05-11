@@ -37,3 +37,7 @@ HELP.md
 
 # Claude Code
 .claude/
+CLAUDE.md
+
+# Nested duplicate folder (empty artifact)
+CarBusiness-Manager/
