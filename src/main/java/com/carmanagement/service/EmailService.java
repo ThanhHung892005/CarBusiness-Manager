@@ -1,7 +1,6 @@
 package com.carmanagement.service;
 
 import com.carmanagement.entity.Order;
-import com.carmanagement.entity.ServiceAppointment;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,20 +29,6 @@ public class EmailService {
             "Kính gửi " + order.getCustomer().getFullName() + ",\n\n" +
             "Đơn hàng " + order.getOrderCode() + " của bạn đã được xác nhận.\n" +
             "Tổng tiền: " + order.getTotalAmount() + " VNĐ\n\n" +
-            "Trân trọng,\nCar Management System"
-        );
-    }
-
-    @Async
-    public void sendAppointmentReminder(ServiceAppointment appointment) {
-        String to = appointment.getCustomer().getEmail();
-        if (to == null || to.isBlank()) return;
-
-        send(to,
-            "Nhắc lịch hẹn dịch vụ " + appointment.getAppointmentCode(),
-            "Kính gửi " + appointment.getCustomer().getFullName() + ",\n\n" +
-            "Bạn có lịch hẹn dịch vụ vào " + appointment.getAppointmentDate() + ".\n" +
-            "Loại dịch vụ: " + appointment.getServiceType() + "\n\n" +
             "Trân trọng,\nCar Management System"
         );
     }

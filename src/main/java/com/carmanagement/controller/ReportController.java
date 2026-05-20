@@ -16,7 +16,7 @@ import java.time.LocalDate;
 
 @Controller
 @RequestMapping("/manager/reports")
-@PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+@PreAuthorize("hasAnyRole('GIAM_DOC','KE_TOAN')")
 @RequiredArgsConstructor
 public class ReportController {
 

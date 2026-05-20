@@ -20,16 +20,16 @@ public class CustomAuthSuccessHandler implements AuthenticationSuccessHandler {
         Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
 
         String redirectUrl;
-        if (roles.contains("ROLE_ADMIN")) {
+        if (roles.contains("ROLE_GIAM_DOC")) {
             redirectUrl = "/admin/dashboard";
-        } else if (roles.contains("ROLE_MANAGER")) {
-            redirectUrl = "/manager/dashboard";
-        } else if (roles.contains("ROLE_SALES")) {
+        } else if (roles.contains("ROLE_NV_KINH_DOANH")) {
             redirectUrl = "/sales/dashboard";
-        } else if (roles.contains("ROLE_CUSTOMER")) {
-            redirectUrl = "/customer/dashboard";
+        } else if (roles.contains("ROLE_KE_TOAN")) {
+            redirectUrl = "/ke-toan/dashboard";
+        } else if (roles.contains("ROLE_THU_KHO")) {
+            redirectUrl = "/inventory/dashboard";
         } else {
-            redirectUrl = "/";
+            redirectUrl = "/login";
         }
 
         response.sendRedirect(request.getContextPath() + redirectUrl);

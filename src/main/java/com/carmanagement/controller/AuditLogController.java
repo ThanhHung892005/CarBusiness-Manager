@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 
 @Controller
 @RequestMapping("/admin/audit-logs")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('GIAM_DOC')")
 @RequiredArgsConstructor
 public class AuditLogController {
 

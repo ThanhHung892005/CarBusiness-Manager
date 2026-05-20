@@ -1,13 +1,11 @@
 package com.carmanagement.controller;
 
 import com.carmanagement.dto.response.DashboardStatsResponse;
-import com.carmanagement.enums.OrderStatus;
 import com.carmanagement.enums.VehicleStatus;
 import com.carmanagement.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,47 +28,46 @@ public class DashboardController {
     private final OrderRepository orderRepository;
     private final EmployeeRepository employeeRepository;
     private final ShowroomRepository showroomRepository;
-    private final ServiceAppointmentRepository appointmentRepository;
 
     @GetMapping("/admin/dashboard")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('GIAM_DOC')")
     public String adminDashboard(Model model) {
         model.addAttribute("stats", buildStats());
+        model.addAttribute("recentOrders", orderRepository.findRecentOrders(PageRequest.of(0, 10)));
         return "admin/dashboard";
     }
 
-    @GetMapping("/manager/dashboard")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
-    public String managerDashboard(Model model) {
-        model.addAttribute("stats", buildStats());
-        model.addAttribute("recentOrders", orderRepository.findRecentOrders(PageRequest.of(0, 10)));
-        return "manager/dashboard";
-    }
-
     @GetMapping("/sales/dashboard")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','SALES')")
+    @PreAuthorize("hasAnyRole('GIAM_DOC','NV_KINH_DOANH')")
     public String salesDashboard(Model model) {
         model.addAttribute("stats", buildStats());
+        model.addAttribute("recentOrders", orderRepository.findRecentOrders(PageRequest.of(0, 5)));
         return "sales/dashboard";
     }
 
-    @GetMapping("/customer/dashboard")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','SALES','CUSTOMER')")
-    public String customerDashboard(Model model, Authentication auth) {
-        String username = auth.getName();
-        customerRepository.findByUserUsername(username).ifPresent(customer -> {
-            model.addAttribute("loyaltyPoints", customer.getLoyaltyPoints());
-            model.addAttribute("myOrders",
-                orderRepository.findByCustomerUsername(username, PageRequest.of(0, 10)));
-            model.addAttribute("myAppointments",
-                appointmentRepository.findUpcomingByCustomerUsername(username, LocalDateTime.now(), PageRequest.of(0, 5)));
-        });
-        return "customer/dashboard";
+    @GetMapping("/ke-toan/dashboard")
+    @PreAuthorize("hasAnyRole('GIAM_DOC','KE_TOAN')")
+    public String keToanDashboard(Model model) {
+        LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime now = LocalDateTime.now();
+        model.addAttribute("revenueThisMonth", orderRepository.sumRevenueByDateRange(startOfMonth, now));
+        model.addAttribute("ordersThisMonth", orderRepository.countByOrderDateBetween(startOfMonth, now));
+        return "ke-toan/dashboard";
+    }
+
+    @GetMapping("/inventory/dashboard")
+    @PreAuthorize("hasAnyRole('GIAM_DOC','THU_KHO')")
+    public String inventoryDashboard(Model model) {
+        model.addAttribute("totalVehicles", vehicleRepository.count());
+        model.addAttribute("available", vehicleRepository.countByStatus(com.carmanagement.enums.VehicleStatus.AVAILABLE));
+        model.addAttribute("reserved", vehicleRepository.countByStatus(com.carmanagement.enums.VehicleStatus.RESERVED));
+        model.addAttribute("maintenance", vehicleRepository.countByStatus(com.carmanagement.enums.VehicleStatus.MAINTENANCE));
+        return "inventory/dashboard";
     }
 
     @GetMapping("/api/stats/revenue-monthly")
     @ResponseBody
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('GIAM_DOC','KE_TOAN')")
     public Map<String, Object> revenueMonthly(@RequestParam(defaultValue = "0") int year) {
         int reportYear = year == 0 ? LocalDate.now().getYear() : year;
         List<Object[]> rows = orderRepository.findMonthlyRevenue(reportYear);
@@ -92,7 +89,7 @@ public class DashboardController {
 
     @GetMapping("/api/stats/vehicle-status")
     @ResponseBody
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('GIAM_DOC','KE_TOAN')")
     public Map<String, Object> vehicleStatus() {
         long available  = vehicleRepository.countByStatus(VehicleStatus.AVAILABLE);
         long reserved   = vehicleRepository.countByStatus(VehicleStatus.RESERVED);

@@ -61,12 +61,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findRecentOrders(Pageable pageable);
 
     @Query(value = """
-        SELECT EXTRACT(MONTH FROM order_date)::int AS month,
+        SELECT CAST(EXTRACT(MONTH FROM order_date) AS int) AS month,
                COALESCE(SUM(total_amount), 0) AS revenue
         FROM orders
         WHERE status = 'COMPLETED'
           AND EXTRACT(YEAR FROM order_date) = :year
-        GROUP BY EXTRACT(MONTH FROM order_date)
+        GROUP BY CAST(EXTRACT(MONTH FROM order_date) AS int)
         ORDER BY month
         """, nativeQuery = true)
     List<Object[]> findMonthlyRevenue(@Param("year") int year);

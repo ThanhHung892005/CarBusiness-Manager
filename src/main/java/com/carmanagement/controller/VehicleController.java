@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/inventory/vehicles")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN','MANAGER','SALES')")
+@PreAuthorize("hasAnyRole('GIAM_DOC','NV_KINH_DOANH','THU_KHO')")
 public class VehicleController {
 
     private final VehicleService vehicleService;
@@ -48,7 +48,7 @@ public class VehicleController {
     }
 
     @GetMapping("/new")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('GIAM_DOC','THU_KHO')")
     public String createForm(Model model) {
         model.addAttribute("vehicle", new VehicleCreateRequest());
         model.addAttribute("brands", brandService.findAllActive());
@@ -57,7 +57,7 @@ public class VehicleController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('GIAM_DOC','THU_KHO')")
     public String create(@Valid @ModelAttribute("vehicle") VehicleCreateRequest request,
                          BindingResult result,
                          @RequestParam(required = false) MultipartFile[] images,
@@ -77,7 +77,7 @@ public class VehicleController {
     }
 
     @GetMapping("/{id}/edit")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('GIAM_DOC','THU_KHO')")
     public String editForm(@PathVariable Long id, Model model) {
         var vehicle = vehicleService.findWithDetailsById(id);
         var request = new VehicleCreateRequest();
@@ -100,7 +100,7 @@ public class VehicleController {
 
     @GetMapping("/brands/{brandId}/models")
     @ResponseBody
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('GIAM_DOC','THU_KHO')")
     public List<Map<String, Object>> modelsByBrand(@PathVariable Long brandId) {
         return carModelService.findByBrand(brandId).stream()
             .map(m -> {
@@ -113,7 +113,7 @@ public class VehicleController {
     }
 
     @PostMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('GIAM_DOC','THU_KHO')")
     public String update(@PathVariable Long id,
                          @Valid @ModelAttribute("vehicle") VehicleCreateRequest request,
                          BindingResult result,

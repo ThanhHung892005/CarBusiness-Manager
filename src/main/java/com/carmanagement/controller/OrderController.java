@@ -31,7 +31,7 @@ import java.time.LocalDate;
 @Controller
 @RequestMapping("/sales/orders")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN','MANAGER','SALES')")
+@PreAuthorize("hasAnyRole('GIAM_DOC','NV_KINH_DOANH')")
 public class OrderController {
 
     private final OrderService orderService;

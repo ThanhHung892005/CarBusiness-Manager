@@ -17,7 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/sales/customers")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN','MANAGER','SALES')")
+@PreAuthorize("hasAnyRole('GIAM_DOC','NV_KINH_DOANH')")
 public class CustomerController {
 
     private final CustomerService customerService;

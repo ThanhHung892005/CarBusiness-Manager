@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<title>Chi tiết Hóa Đơn</title>
+<main>
+<div class="container py-3" style="max-width: 900px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3><i class="fas fa-receipt me-2 text-success"></i>Hóa Đơn
+            <span th:text="${invoice.invoiceCode}" class="text-muted fs-5"></span>
+        </h3>
+        <div class="d-flex gap-2">
+            <a th:href="@{/ke-toan/invoices/{id}/pdf(id=${invoice.id})}"
+               class="btn btn-outline-danger btn-sm">
+                <i class="fas fa-file-pdf me-1"></i>Xuất PDF
+            </a>
+            <a th:href="@{/ke-toan/invoices}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Quay lại
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <!-- Invoice Info -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-semibold">Thông tin hóa đơn</div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr><th class="text-muted w-40">Mã HĐ</th><td th:text="${invoice.invoiceCode}"></td></tr>
+                        <tr><th class="text-muted">Đơn hàng</th>
+                            <td><a th:href="@{/sales/orders/{id}(id=${invoice.order.id})}"
+                                   th:text="${invoice.order.orderCode}"></a></td></tr>
+                        <tr><th class="text-muted">Ngày lập</th>
+                            <td th:text="${#temporals.format(invoice.issuedDate, 'dd/MM/yyyy HH:mm')}"></td></tr>
+                        <tr><th class="text-muted">Hạn TT</th>
+                            <td th:text="${invoice.dueDate != null ? #temporals.format(invoice.dueDate, 'dd/MM/yyyy') : '—'}"></td></tr>
+                        <tr><th class="text-muted">Trạng thái</th>
+                            <td><span th:class="${invoice.status.name() == 'PAID' ? 'badge bg-success' :
+                                                  invoice.status.name() == 'PARTIAL' ? 'badge bg-warning text-dark' : 'badge bg-danger'}"
+                                      th:text="${invoice.status}"></span></td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Customer & Amount -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-semibold">Khách hàng & Thanh toán</div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr><th class="text-muted w-40">Khách hàng</th>
+                            <td th:text="${invoice.order.customer.fullName}"></td></tr>
+                        <tr><th class="text-muted">SĐT</th>
+                            <td th:text="${invoice.order.customer.phone}"></td></tr>
+                        <tr><th class="text-muted">Tổng tiền</th>
+                            <td class="fw-bold"
+                                th:text="${#numbers.formatDecimal(invoice.totalAmount, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></td></tr>
+                        <tr><th class="text-muted">Đã TT</th>
+                            <td class="text-success fw-semibold"
+                                th:text="${#numbers.formatDecimal(invoice.paidAmount, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></td></tr>
+                        <tr><th class="text-muted">Còn lại</th>
+                            <td th:class="${invoice.remaining.signum() > 0 ? 'text-danger fw-bold' : 'text-success fw-bold'}"
+                                th:text="${#numbers.formatDecimal(invoice.remaining, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment History -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white fw-semibold">Lịch sử thanh toán</div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                <tr><th>Ngày TT</th><th>Số tiền</th><th>Phương thức</th><th>Mã tham chiếu</th><th>Ghi chú</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${invoice.payments}">
+                    <td th:text="${#temporals.format(p.paymentDate, 'dd/MM/yyyy')}"></td>
+                    <td class="fw-semibold"
+                        th:text="${#numbers.formatDecimal(p.amount, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></td>
+                    <td th:text="${p.paymentMethod}"></td>
+                    <td th:text="${p.referenceNo ?: '—'}"></td>
+                    <td th:text="${p.notes ?: '—'}"></td>
+                </tr>
+                <tr th:if="${invoice.payments.isEmpty()}">
+                    <td colspan="5" class="text-center text-muted py-3">Chưa có thanh toán nào</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add Payment Form -->
+    <div class="card border-0 shadow-sm" th:if="${invoice.status.name() != 'PAID'}">
+        <div class="card-header bg-white fw-semibold">Ghi nhận thanh toán mới</div>
+        <div class="card-body">
+            <form th:action="@{/ke-toan/invoices/{id}/payment(id=${invoice.id})}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Số tiền <span class="text-danger">*</span></label>
+                        <input type="number" name="amount" class="form-control" required min="1"
+                               th:placeholder="${#numbers.formatDecimal(invoice.remaining, 0, 'COMMA', 0, 'POINT')}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Phương thức <span class="text-danger">*</span></label>
+                        <select name="paymentMethod" class="form-select" required>
+                            <option value="CASH">Tiền mặt</option>
+                            <option value="BANK_TRANSFER">Chuyển khoản</option>
+                            <option value="INSTALLMENT">Trả góp</option>
+                            <option value="CARD">Thẻ</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Mã tham chiếu</label>
+                        <input type="text" name="referenceNo" class="form-control" placeholder="Số giao dịch...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Ghi chú</label>
+                        <input type="text" name="notes" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-1"></i>Xác nhận thanh toán
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</main>
+<scripts></scripts>
+</html>

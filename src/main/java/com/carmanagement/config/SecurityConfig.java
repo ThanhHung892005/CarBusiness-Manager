@@ -39,11 +39,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**",
                                  "/webjars/**", "/favicon.ico").permitAll()
-                .requestMatchers("/", "/home", "/login", "/register", "/error").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/manager/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers("/sales/**").hasAnyRole("ADMIN", "MANAGER", "SALES")
-                .requestMatchers("/customer/**").hasAnyRole("ADMIN", "MANAGER", "SALES", "CUSTOMER")
+                .requestMatchers("/", "/login", "/error").permitAll()
+                .requestMatchers("/admin/**").hasRole("GIAM_DOC")
+                .requestMatchers("/inventory/**").hasAnyRole("GIAM_DOC", "NV_KINH_DOANH", "THU_KHO")
+                .requestMatchers("/sales/**").hasAnyRole("GIAM_DOC", "NV_KINH_DOANH")
+                .requestMatchers("/ke-toan/**").hasAnyRole("GIAM_DOC", "KE_TOAN")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
