@@ -84,4 +84,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         WHERE o.id = :id
         """)
     Optional<Order> findWithDetailsById(@Param("id") Long id);
+
+    @Query(value = """
+        SELECT COALESCE(SUM(commission_amt), 0)
+        FROM orders
+        WHERE employee_id = :employeeId
+          AND EXTRACT(MONTH FROM order_date) = :month
+          AND EXTRACT(YEAR FROM order_date) = :year
+          AND status != 'CANCELLED'
+        """, nativeQuery = true)
+    BigDecimal sumCommissionByEmployeeAndMonth(@Param("employeeId") Long employeeId,
+                                              @Param("month") int month,
+                                              @Param("year") int year);
 }

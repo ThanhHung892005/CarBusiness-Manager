@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Tính Lương | Car Management</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4><i class="fas fa-calculator me-2 text-primary"></i>Tính Lương Nhân Viên</h4>
+            <a th:href="@{/admin/hr/payroll}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Quay Lại
+            </a>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">
+                        <i class="fas fa-info-circle me-1 text-info"></i>Chọn nhân viên và tháng cần tính lương
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/admin/hr/payroll/calculate}" th:object="${calcRequest}" method="post">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Nhân Viên <span class="text-danger">*</span></label>
+                                <select class="form-select" th:field="*{employeeId}"
+                                        th:classappend="${#fields.hasErrors('employeeId')} ? 'is-invalid'">
+                                    <option value="">-- Chọn nhân viên --</option>
+                                    <option th:each="emp : ${employees}"
+                                            th:value="${emp.id}"
+                                            th:text="${emp.user.fullName + ' (' + emp.employeeCode + ')'}"></option>
+                                </select>
+                                <div class="invalid-feedback" th:errors="*{employeeId}"></div>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-7">
+                                    <label class="form-label fw-semibold">Tháng <span class="text-danger">*</span></label>
+                                    <select class="form-select" th:field="*{month}">
+                                        <option th:each="m : ${months}" th:value="${m}"
+                                                th:text="'Tháng ' + ${m}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-5">
+                                    <label class="form-label fw-semibold">Năm <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" th:field="*{year}"
+                                           min="2020" max="2099"
+                                           th:classappend="${#fields.hasErrors('year')} ? 'is-invalid'">
+                                    <div class="invalid-feedback" th:errors="*{year}"></div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-light border small mb-3">
+                                <i class="fas fa-lightbulb text-warning me-1"></i>
+                                Hệ thống sẽ tự động tính dựa trên:
+                                <ul class="mb-0 mt-1">
+                                    <li>Bản ghi chấm công trong tháng</li>
+                                    <li>Hoa hồng từ đơn hàng hoàn thành trong tháng</li>
+                                    <li>Lương cơ bản của nhân viên</li>
+                                </ul>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-calculator me-1"></i>Tính Lương
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>
