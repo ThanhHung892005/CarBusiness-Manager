@@ -68,8 +68,7 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted ps-3">→ Lương theo công</td>
-                                    <td class="text-end" th:if="${payroll.workDays > 0}"
-                                        th:text="${#numbers.formatDecimal(payroll.baseSalary.multiply(payroll.effectiveDays).divide(T(java.math.BigDecimal).valueOf(payroll.workDays), 0, T(java.math.RoundingMode).HALF_UP), 0, 'COMMA', 0, 'POINT') + ' đ'}"></td>
+                                    <td class="text-end" th:text="${#numbers.formatDecimal(baseSalaryEarned, 0, 'COMMA', 0, 'POINT') + ' đ'}"></td>
                                 </tr>
                                 <tr class="text-success">
                                     <td>+ Hoa hồng đơn hàng</td>

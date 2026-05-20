@@ -1,0 +1,251 @@
+// Car Business Manager — ERD (dbdiagram.io)
+// Paste toàn bộ nội dung này vào https://dbdiagram.io để xem diagram
+
+Table users {
+  id bigserial [pk]
+  username varchar(50) [unique, not null]
+  password varchar(255) [not null]
+  email varchar(150) [unique]
+  full_name varchar(150)
+  phone varchar(20)
+  enabled boolean [default: true]
+  account_locked boolean [default: false]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table roles {
+  id bigserial [pk]
+  name varchar(50) [unique, not null]
+  description varchar(255)
+}
+
+Table user_roles {
+  user_id bigint [ref: > users.id]
+  role_id bigint [ref: > roles.id]
+  indexes {
+    (user_id, role_id) [pk]
+  }
+}
+
+Table departments {
+  id bigserial [pk]
+  name varchar(100) [not null]
+  description text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table showrooms {
+  id bigserial [pk]
+  name varchar(150) [not null]
+  address varchar(500)
+  city varchar(100)
+  phone varchar(20)
+  email varchar(150)
+  manager_name varchar(150)
+  active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table employees {
+  id bigserial [pk]
+  user_id bigint [ref: > users.id]
+  department_id bigint [ref: > departments.id]
+  showroom_id bigint [ref: > showrooms.id]
+  employee_code varchar(20) [unique, not null]
+  position varchar(100)
+  hire_date date
+  salary decimal(15,2)
+  commission_rate decimal(5,4) [default: 0.02]
+  active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table brands {
+  id bigserial [pk]
+  name varchar(100) [unique, not null]
+  country varchar(100)
+  logo varchar(500)
+  description text
+  active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table car_models {
+  id bigserial [pk]
+  brand_id bigint [ref: > brands.id]
+  name varchar(100) [not null]
+  year int [not null]
+  car_type varchar(50) [not null, note: 'SEDAN|SUV|HATCHBACK|PICKUP|VAN|MPV|COUPE']
+  engine varchar(100)
+  transmission varchar(50)
+  fuel_type varchar(50)
+  seats int
+  description text
+  base_price decimal(15,2)
+  active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (brand_id, name, year) [unique]
+  }
+}
+
+Table vehicles {
+  id bigserial [pk]
+  vin varchar(17) [unique, not null]
+  car_model_id bigint [ref: > car_models.id]
+  showroom_id bigint [ref: > showrooms.id]
+  color varchar(50) [not null]
+  color_code varchar(20)
+  import_price decimal(15,2) [not null]
+  selling_price decimal(15,2) [not null]
+  status varchar(30) [not null, note: 'AVAILABLE|RESERVED|SOLD|MAINTENANCE']
+  import_date date
+  sold_date date
+  mileage int [default: 0]
+  notes text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table vehicle_images {
+  id bigserial [pk]
+  vehicle_id bigint [ref: > vehicles.id]
+  url varchar(500) [not null]
+  is_primary boolean [default: false]
+  sort_order int [default: 0]
+  created_at timestamp
+}
+
+Table customers {
+  id bigserial [pk]
+  user_id bigint [ref: > users.id]
+  customer_code varchar(20) [unique, not null]
+  full_name varchar(150) [not null]
+  email varchar(150)
+  phone varchar(20) [not null]
+  address varchar(500)
+  city varchar(100)
+  id_number varchar(20)
+  tax_code varchar(20)
+  company_name varchar(200)
+  customer_type varchar(20) [not null, note: 'NEW|REGULAR|VIP']
+  is_corporate boolean [default: false]
+  loyalty_points int [default: 0]
+  notes text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table orders {
+  id bigserial [pk]
+  order_code varchar(30) [unique, not null]
+  customer_id bigint [ref: > customers.id]
+  employee_id bigint [ref: > employees.id]
+  showroom_id bigint [ref: > showrooms.id]
+  status varchar(30) [not null, note: 'DRAFT|CONFIRMED|DELIVERED|COMPLETED|CANCELLED']
+  order_date timestamp [not null]
+  delivery_date timestamp
+  subtotal decimal(15,2) [not null]
+  discount_amount decimal(15,2) [default: 0]
+  discount_pct decimal(5,2) [default: 0]
+  total_amount decimal(15,2) [not null]
+  commission_amt decimal(15,2) [default: 0]
+  notes text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table order_items {
+  id bigserial [pk]
+  order_id bigint [ref: > orders.id]
+  vehicle_id bigint [ref: > vehicles.id]
+  unit_price decimal(15,2) [not null]
+  discount decimal(15,2) [default: 0]
+  line_total decimal(15,2) [not null]
+  created_at timestamp
+}
+
+Table invoices {
+  id bigserial [pk]
+  invoice_code varchar(30) [unique, not null]
+  order_id bigint [unique, ref: > orders.id]
+  issued_date timestamp [not null]
+  due_date timestamp
+  total_amount decimal(15,2) [not null]
+  paid_amount decimal(15,2) [default: 0]
+  remaining decimal(15,2) [note: 'generated: total_amount - paid_amount']
+  status varchar(20) [not null, note: 'UNPAID|PARTIAL|PAID']
+  pdf_path varchar(500)
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table payments {
+  id bigserial [pk]
+  invoice_id bigint [ref: > invoices.id]
+  amount decimal(15,2) [not null]
+  payment_method varchar(30) [not null, note: 'CASH|BANK_TRANSFER|INSTALLMENT|CARD']
+  reference_no varchar(100)
+  notes text
+  created_at timestamp
+}
+
+Table service_appointments {
+  id bigserial [pk]
+  appointment_code varchar(20) [unique, not null]
+  customer_id bigint [ref: > customers.id]
+  vehicle_id bigint [ref: > vehicles.id]
+  showroom_id bigint [ref: > showrooms.id]
+  employee_id bigint [ref: > employees.id]
+  appointment_date timestamp [not null]
+  service_type varchar(50) [note: 'MAINTENANCE|REPAIR|INSPECTION|WARRANTY|OTHER']
+  status varchar(30) [not null, note: 'SCHEDULED|CONFIRMED|IN_PROGRESS|COMPLETED|CANCELLED']
+  description text
+  estimated_cost decimal(15,2)
+  actual_cost decimal(15,2)
+  notes text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table service_records {
+  id bigserial [pk]
+  appointment_id bigint [ref: > service_appointments.id]
+  vehicle_id bigint [ref: > vehicles.id]
+  technician_id bigint [ref: > employees.id]
+  service_date date [not null]
+  mileage_at_service int
+  diagnosis text
+  work_done text
+  total_cost decimal(15,2)
+  next_service_date date
+  created_at timestamp
+}
+
+Table service_items {
+  id bigserial [pk]
+  service_record_id bigint [ref: > service_records.id]
+  item_type varchar(20) [not null, note: 'LABOR|PART']
+  name varchar(200) [not null]
+  quantity int [default: 1]
+  unit_price decimal(15,2) [not null]
+  total_price decimal(15,2) [not null]
+}
+
+Table audit_logs {
+  id bigserial [pk]
+  username varchar(50)
+  action varchar(50) [note: 'CREATE|UPDATE|DELETE|LOGIN|LOGOUT|EXPORT']
+  entity_type varchar(100)
+  entity_id bigint
+  description text
+  ip_address varchar(45)
+  created_at timestamp
+}

@@ -3,8 +3,11 @@ package com.carmanagement.controller;
 import com.carmanagement.dto.request.AttendanceCreateRequest;
 import com.carmanagement.dto.request.CalculatePayrollRequest;
 import com.carmanagement.dto.request.PayrollUpdateRequest;
+import com.carmanagement.entity.Payroll;
 import com.carmanagement.enums.AttendanceStatus;
 import com.carmanagement.enums.PayrollStatus;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import com.carmanagement.repository.EmployeeRepository;
 import com.carmanagement.service.HrService;
 import jakarta.validation.Valid;
@@ -172,8 +175,15 @@ public class HrController {
 
     @GetMapping("/payroll/{id}")
     public String payrollDetail(@PathVariable Long id, Model model) {
-        model.addAttribute("payroll", hrService.findPayrollById(id));
+        Payroll payroll = hrService.findPayrollById(id);
+        model.addAttribute("payroll", payroll);
         model.addAttribute("updateForm", new PayrollUpdateRequest());
+        BigDecimal baseSalaryEarned = payroll.getWorkDays() > 0
+            ? payroll.getBaseSalary()
+                .multiply(payroll.getEffectiveDays())
+                .divide(BigDecimal.valueOf(payroll.getWorkDays()), 0, RoundingMode.HALF_UP)
+            : BigDecimal.ZERO;
+        model.addAttribute("baseSalaryEarned", baseSalaryEarned);
         return "admin/hr/payroll/detail";
     }
 

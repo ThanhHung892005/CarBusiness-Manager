@@ -41,14 +41,14 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
         JOIN FETCH a.employee e
         JOIN FETCH e.user
         WHERE (:employeeId IS NULL OR a.employee.id = :employeeId)
-          AND (:startDate IS NULL OR a.date >= :startDate)
-          AND (:endDate IS NULL OR a.date <= :endDate)
+          AND a.date >= :startDate
+          AND a.date <= :endDate
         """,
         countQuery = """
         SELECT COUNT(a) FROM Attendance a
         WHERE (:employeeId IS NULL OR a.employee.id = :employeeId)
-          AND (:startDate IS NULL OR a.date >= :startDate)
-          AND (:endDate IS NULL OR a.date <= :endDate)
+          AND a.date >= :startDate
+          AND a.date <= :endDate
         """)
     Page<Attendance> search(@Param("employeeId") Long employeeId,
                             @Param("startDate") LocalDate startDate,
