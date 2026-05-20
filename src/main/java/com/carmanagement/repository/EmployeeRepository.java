@@ -17,6 +17,17 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     Optional<Employee> findByUserId(Long userId);
 
+    Optional<Employee> findTopByOrderByIdDesc();
+
+    @Query("""
+        SELECT e FROM Employee e
+        JOIN FETCH e.user
+        LEFT JOIN FETCH e.showroom
+        LEFT JOIN FETCH e.department
+        WHERE e.id = :id
+        """)
+    Optional<Employee> findWithDetailsById(@Param("id") Long id);
+
     @Query(value = """
         SELECT e FROM Employee e
         JOIN FETCH e.user u

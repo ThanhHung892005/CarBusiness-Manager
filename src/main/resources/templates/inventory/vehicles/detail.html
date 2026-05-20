@@ -142,8 +142,7 @@
                             <tr th:if="${vehicle.importDate != null}">
                                 <td class="text-muted">Ngày nằm kho</td>
                                 <td>
-                                    <span th:text="${#temporals.days(#temporals.createToday()) - #temporals.days(vehicle.importDate) >= 0} ?
-                                        (T(java.time.temporal.ChronoUnit).DAYS.between(vehicle.importDate, T(java.time.LocalDate).now()) + ' ngày') : '—'"></span>
+                                    <span th:text="${T(java.time.LocalDate).now().toEpochDay() - vehicle.importDate.toEpochDay() + ' ngày'}"></span>
                                 </td>
                             </tr>
                             <tr th:if="${vehicle.soldDate != null}">

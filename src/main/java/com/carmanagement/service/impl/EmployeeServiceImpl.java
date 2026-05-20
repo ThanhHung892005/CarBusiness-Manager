@@ -26,7 +26,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Employee findById(Long id) {
-        return employeeRepository.findById(id)
+        return employeeRepository.findWithDetailsById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Employee", id));
     }
 
@@ -39,5 +39,22 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional
     public Employee save(Employee employee) {
         return employeeRepository.save(employee);
+    }
+
+    @Override
+    public String suggestNextCode() {
+        return employeeRepository.findTopByOrderByIdDesc()
+            .map(e -> {
+                String code = e.getEmployeeCode();
+                String digits = code.replaceAll("\\D", "");
+                String prefix = code.replaceAll("\\d", "");
+                try {
+                    int next = Integer.parseInt(digits) + 1;
+                    return String.format("%s%0" + digits.length() + "d", prefix, next);
+                } catch (NumberFormatException ex) {
+                    return code;
+                }
+            })
+            .orElse("EMP000001");
     }
 }

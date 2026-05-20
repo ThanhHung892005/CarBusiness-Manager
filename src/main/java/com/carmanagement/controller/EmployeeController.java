@@ -1,9 +1,10 @@
 package com.carmanagement.controller;
 
 import com.carmanagement.dto.request.EmployeeCreateRequest;
-import com.carmanagement.entity.Department;
 import com.carmanagement.entity.Employee;
+import com.carmanagement.entity.User;
 import com.carmanagement.repository.DepartmentRepository;
+import com.carmanagement.repository.RoleRepository;
 import com.carmanagement.repository.UserRepository;
 import com.carmanagement.service.EmployeeService;
 import com.carmanagement.service.ShowroomService;
@@ -12,22 +13,33 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 @Controller
 @RequestMapping("/admin/employees")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('GIAM_DOC')")
 public class EmployeeController {
 
     private final EmployeeService employeeService;
     private final ShowroomService showroomService;
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    private static final List<String> BUSINESS_ROLES = List.of(
+        "ROLE_GIAM_DOC", "ROLE_NV_KINH_DOANH", "ROLE_KE_TOAN", "ROLE_THU_KHO"
+    );
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "") String keyword,
@@ -47,85 +59,148 @@ public class EmployeeController {
 
     @GetMapping("/new")
     public String createForm(Model model) {
-        model.addAttribute("employeeRequest", new EmployeeCreateRequest());
+        var req = new EmployeeCreateRequest();
+        req.setEmployeeCode(employeeService.suggestNextCode());
+        model.addAttribute("employeeRequest", req);
         populateForm(model);
         return "admin/employees/form";
     }
 
     @PostMapping
-    public String create(@Valid @ModelAttribute("employeeRequest") EmployeeCreateRequest request,
+    @Transactional
+    public String create(@Valid @ModelAttribute("employeeRequest") EmployeeCreateRequest req,
                          BindingResult result,
                          RedirectAttributes ra,
                          Model model) {
+        if (req.getPassword() == null || req.getPassword().isBlank()) {
+            result.rejectValue("password", "required", "Mật khẩu là bắt buộc khi tạo mới");
+        } else if (req.getPassword().length() < 8) {
+            result.rejectValue("password", "size", "Mật khẩu phải có ít nhất 8 ký tự");
+        }
+        if (userRepository.existsByUsername(req.getUsername())) {
+            result.rejectValue("username", "exists", "Tên đăng nhập đã tồn tại");
+        }
+        if (userRepository.existsByEmail(req.getEmail())) {
+            result.rejectValue("email", "exists", "Email đã được sử dụng");
+        }
         if (result.hasErrors()) {
             populateForm(model);
             return "admin/employees/form";
         }
-        var user = userRepository.findById(request.getUserId()).orElseThrow();
-        var employee = new Employee();
-        employee.setEmployeeCode(request.getEmployeeCode());
-        employee.setPosition(request.getPosition());
-        employee.setHireDate(request.getHireDate());
-        employee.setSalary(request.getSalary());
-        employee.setCommissionRate(request.getCommissionRate());
-        employee.setUser(user);
-        employee.setActive(true);
-        if (request.getShowroomId() != null) {
-            employee.setShowroom(showroomService.findById(request.getShowroomId()));
+
+        var role = roleRepository.findByName(req.getRoleName()).orElseThrow();
+        var user = User.builder()
+            .username(req.getUsername())
+            .email(req.getEmail())
+            .password(passwordEncoder.encode(req.getPassword()))
+            .fullName(req.getFullName())
+            .phone(req.getPhone())
+            .enabled(true)
+            .locked(false)
+            .build();
+        user.getRoles().add(role);
+        userRepository.save(user);
+
+        var emp = Employee.builder()
+            .employeeCode(req.getEmployeeCode().toUpperCase())
+            .user(user)
+            .position(req.getPosition())
+            .hireDate(req.getHireDate())
+            .salary(req.getSalary())
+            .commissionRate(req.getCommissionRate() != null ? req.getCommissionRate() : new BigDecimal("0.02"))
+            .active(true)
+            .build();
+        if (req.getShowroomId() != null) {
+            emp.setShowroom(showroomService.findById(req.getShowroomId()));
         }
-        if (request.getDepartmentId() != null) {
-            employee.setDepartment(departmentRepository.findById(request.getDepartmentId()).orElse(null));
+        if (req.getDepartmentId() != null) {
+            emp.setDepartment(departmentRepository.findById(req.getDepartmentId()).orElse(null));
         }
-        employeeService.save(employee);
-        ra.addFlashAttribute("success", "Thêm nhân viên thành công: " + request.getEmployeeCode());
+        employeeService.save(emp);
+
+        ra.addFlashAttribute("success", "Thêm nhân viên thành công: " + emp.getEmployeeCode());
         return "redirect:/admin/employees";
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         var emp = employeeService.findById(id);
-        var request = new EmployeeCreateRequest();
-        request.setEmployeeCode(emp.getEmployeeCode());
-        request.setUserId(emp.getUser().getId());
-        request.setPosition(emp.getPosition());
-        request.setHireDate(emp.getHireDate());
-        request.setSalary(emp.getSalary());
-        request.setCommissionRate(emp.getCommissionRate());
-        request.setShowroomId(emp.getShowroom() != null ? emp.getShowroom().getId() : null);
-        request.setDepartmentId(emp.getDepartment() != null ? emp.getDepartment().getId() : null);
-        model.addAttribute("employeeRequest", request);
+        var user = emp.getUser();
+
+        var req = new EmployeeCreateRequest();
+        req.setUsername(user.getUsername());
+        req.setFullName(user.getFullName());
+        req.setEmail(user.getEmail());
+        req.setPhone(user.getPhone());
+        req.setEnabled(user.getEnabled());
+        req.setLocked(user.getLocked());
+        req.setRoleName(user.getRoles().stream().findFirst().map(r -> r.getName()).orElse(""));
+        req.setEmployeeCode(emp.getEmployeeCode());
+        req.setPosition(emp.getPosition());
+        req.setHireDate(emp.getHireDate());
+        req.setSalary(emp.getSalary());
+        req.setCommissionRate(emp.getCommissionRate());
+        req.setShowroomId(emp.getShowroom() != null ? emp.getShowroom().getId() : null);
+        req.setDepartmentId(emp.getDepartment() != null ? emp.getDepartment().getId() : null);
+
+        model.addAttribute("employeeRequest", req);
         model.addAttribute("employeeId", id);
+        model.addAttribute("editUsername", user.getUsername());
         populateForm(model);
         return "admin/employees/form";
     }
 
     @PostMapping("/{id}")
+    @Transactional
     public String update(@PathVariable Long id,
-                         @Valid @ModelAttribute("employeeRequest") EmployeeCreateRequest request,
+                         @Valid @ModelAttribute("employeeRequest") EmployeeCreateRequest req,
                          BindingResult result,
                          RedirectAttributes ra,
                          Model model) {
+        var emp = employeeService.findById(id);
+        var user = emp.getUser();
+
+        if (req.getPassword() != null && !req.getPassword().isBlank()
+                && req.getPassword().length() < 8) {
+            result.rejectValue("password", "size", "Mật khẩu phải có ít nhất 8 ký tự");
+        }
+        if (!user.getEmail().equalsIgnoreCase(req.getEmail())
+                && userRepository.existsByEmail(req.getEmail())) {
+            result.rejectValue("email", "exists", "Email đã được sử dụng");
+        }
         if (result.hasErrors()) {
             model.addAttribute("employeeId", id);
+            model.addAttribute("editUsername", user.getUsername());
             populateForm(model);
             return "admin/employees/form";
         }
-        var emp = employeeService.findById(id);
-        emp.setPosition(request.getPosition());
-        emp.setHireDate(request.getHireDate());
-        emp.setSalary(request.getSalary());
-        emp.setCommissionRate(request.getCommissionRate());
-        if (request.getShowroomId() != null) {
-            emp.setShowroom(showroomService.findById(request.getShowroomId()));
-        } else {
-            emp.setShowroom(null);
+
+        // Cập nhật User
+        user.setFullName(req.getFullName());
+        user.setEmail(req.getEmail());
+        user.setPhone(req.getPhone());
+        user.setEnabled(Boolean.TRUE.equals(req.getEnabled()));
+        user.setLocked(Boolean.TRUE.equals(req.getLocked()));
+        if (req.getPassword() != null && !req.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(req.getPassword()));
         }
-        if (request.getDepartmentId() != null) {
-            emp.setDepartment(departmentRepository.findById(request.getDepartmentId()).orElse(null));
-        } else {
-            emp.setDepartment(null);
+        if (req.getRoleName() != null && !req.getRoleName().isBlank()) {
+            var role = roleRepository.findByName(req.getRoleName()).orElseThrow();
+            user.getRoles().clear();
+            user.getRoles().add(role);
         }
+        userRepository.save(user);
+
+        // Cập nhật Employee
+        emp.setPosition(req.getPosition());
+        emp.setHireDate(req.getHireDate());
+        emp.setSalary(req.getSalary());
+        if (req.getCommissionRate() != null) emp.setCommissionRate(req.getCommissionRate());
+        emp.setShowroom(req.getShowroomId() != null ? showroomService.findById(req.getShowroomId()) : null);
+        emp.setDepartment(req.getDepartmentId() != null
+            ? departmentRepository.findById(req.getDepartmentId()).orElse(null) : null);
         employeeService.save(emp);
+
         ra.addFlashAttribute("success", "Cập nhật nhân viên thành công");
         return "redirect:/admin/employees";
     }
@@ -133,6 +208,6 @@ public class EmployeeController {
     private void populateForm(Model model) {
         model.addAttribute("showrooms", showroomService.findAllActive());
         model.addAttribute("departments", departmentRepository.findAll());
-        model.addAttribute("users", userRepository.findAll(Sort.by("fullName")));
+        model.addAttribute("businessRoles", BUSINESS_ROLES);
     }
 }

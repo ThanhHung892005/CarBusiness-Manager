@@ -11,4 +11,5 @@ public interface EmployeeService {
     Employee findById(Long id);
     Optional<Employee> findByUserId(Long userId);
     Employee save(Employee employee);
+    String suggestNextCode();
 }
