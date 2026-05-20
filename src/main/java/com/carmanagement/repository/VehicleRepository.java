@@ -79,4 +79,13 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     List<Vehicle> findAllWithDetails();
 
     long countByStatusIn(List<VehicleStatus> statuses);
+
+    @Query("""
+        SELECT v FROM Vehicle v
+        JOIN FETCH v.carModel m
+        JOIN FETCH m.brand
+        WHERE v.status = :status
+        ORDER BY m.brand.name, m.name
+        """)
+    List<Vehicle> findAvailableByStatus(@Param("status") VehicleStatus status);
 }

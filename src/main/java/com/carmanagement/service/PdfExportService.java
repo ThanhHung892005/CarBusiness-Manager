@@ -1,12 +1,15 @@
 package com.carmanagement.service;
 
+import com.carmanagement.dto.request.QuoteRequest;
 import com.carmanagement.entity.Invoice;
 import com.carmanagement.entity.Order;
 import com.carmanagement.entity.OrderItem;
 import com.carmanagement.entity.Payment;
+import com.carmanagement.entity.Vehicle;
 import com.carmanagement.exception.ResourceNotFoundException;
 import com.carmanagement.repository.InvoiceRepository;
 import com.carmanagement.repository.OrderRepository;
+import com.carmanagement.repository.VehicleRepository;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.io.font.PdfEncodings;
@@ -37,6 +40,7 @@ public class PdfExportService {
 
     private final OrderRepository orderRepository;
     private final InvoiceRepository invoiceRepository;
+    private final VehicleRepository vehicleRepository;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -73,6 +77,96 @@ public class PdfExportService {
             return baos.toByteArray();
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate invoice PDF", e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportQuotePdf(QuoteRequest req) {
+        Vehicle vehicle = vehicleRepository.findWithDetailsById(req.getVehicleId())
+            .orElseThrow(() -> new ResourceNotFoundException("Vehicle", req.getVehicleId()));
+
+        BigDecimal unitPrice = vehicle.getSellingPrice();
+        BigDecimal discount  = req.getDiscountAmount() != null ? req.getDiscountAmount() : BigDecimal.ZERO;
+        BigDecimal total     = unitPrice.subtract(discount);
+        java.time.LocalDate validUntil = java.time.LocalDate.now().plusDays(req.getValidDays() != null ? req.getValidDays() : 7);
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdf  = new PdfDocument(writer);
+            Document doc     = new Document(pdf);
+            doc.setMargins(40, 40, 40, 40);
+
+            PdfFont bold    = loadFont("/fonts/NotoSans-Bold.ttf");
+            PdfFont regular = loadFont("/fonts/NotoSans-Regular.ttf");
+
+            // Header
+            doc.add(new Paragraph("CAR MANAGEMENT SYSTEM")
+                .setFont(bold).setFontSize(20).setFontColor(HEADER_BG).setTextAlignment(TextAlignment.CENTER));
+            doc.add(new Paragraph("BAO GIA XE / VEHICLE QUOTATION")
+                .setFont(bold).setFontSize(14).setTextAlignment(TextAlignment.CENTER).setMarginBottom(4));
+            doc.add(new Paragraph("________________________________________")
+                .setFontColor(ColorConstants.GRAY).setTextAlignment(TextAlignment.CENTER).setMarginBottom(16));
+
+            // Quote meta
+            Table meta = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
+            String quoteNo = "BG" + java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"))
+                + String.format("%04d", (long)(Math.random() * 9999 + 1));
+            addInfoRow(meta, bold, regular, "So Bao Gia:", quoteNo);
+            addInfoRow(meta, bold, regular, "Ngay Lap:", java.time.LocalDate.now().format(DATE_FMT));
+            addInfoRow(meta, bold, regular, "Hieu Luc Den:", validUntil.format(DATE_FMT));
+            doc.add(meta);
+            doc.add(new Paragraph(" ").setMarginBottom(8));
+
+            // Customer info
+            doc.add(new Paragraph("THONG TIN KHACH HANG")
+                .setFont(bold).setFontSize(11).setFontColor(HEADER_BG).setMarginBottom(4));
+            Table cust = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
+            addInfoRow(cust, bold, regular, "Ho Ten:", req.getCustomerName());
+            addInfoRow(cust, bold, regular, "Dien Thoai:", req.getCustomerPhone());
+            if (req.getCustomerEmail() != null && !req.getCustomerEmail().isBlank()) {
+                addInfoRow(cust, bold, regular, "Email:", req.getCustomerEmail());
+            }
+            doc.add(cust);
+            doc.add(new Paragraph(" ").setMarginBottom(8));
+
+            // Vehicle details
+            doc.add(new Paragraph("THONG TIN XE")
+                .setFont(bold).setFontSize(11).setFontColor(HEADER_BG).setMarginBottom(4));
+            var m = vehicle.getCarModel();
+            Table veh = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
+            addInfoRow(veh, bold, regular, "Hang Xe:", m.getBrand().getName());
+            addInfoRow(veh, bold, regular, "Dong Xe:", m.getName() + " " + m.getYear());
+            addInfoRow(veh, bold, regular, "Mau Sac:", vehicle.getColor());
+            addInfoRow(veh, bold, regular, "VIN:", vehicle.getVin());
+            doc.add(veh);
+            doc.add(new Paragraph(" ").setMarginBottom(8));
+
+            // Pricing table
+            doc.add(new Paragraph("BANG GIA")
+                .setFont(bold).setFontSize(11).setFontColor(HEADER_BG).setMarginBottom(4));
+            Table pricing = new Table(UnitValue.createPercentArray(new float[]{60, 40})).useAllAvailableWidth();
+            addTotalRow(pricing, bold, regular, "Gia Niem Yet (VND):", formatMoney(unitPrice), false);
+            addTotalRow(pricing, bold, regular, "Chiet Khau (VND):", "- " + formatMoney(discount), false);
+            addTotalRow(pricing, bold, regular, "GIA BAO (VND):", formatMoney(total), true);
+            doc.add(pricing);
+
+            if (req.getNotes() != null && !req.getNotes().isBlank()) {
+                doc.add(new Paragraph(" ").setMarginBottom(8));
+                doc.add(new Paragraph("Ghi chu: " + req.getNotes())
+                    .setFont(regular).setFontSize(9).setFontColor(ColorConstants.GRAY));
+            }
+
+            doc.add(new Paragraph(" ").setMarginTop(16));
+            doc.add(new Paragraph("Bao gia co hieu luc den het ngay " + validUntil.format(DATE_FMT)
+                + ". Lien he chung toi de duoc ho tro tot nhat.")
+                .setFont(regular).setFontSize(9).setFontColor(ColorConstants.GRAY)
+                .setTextAlignment(TextAlignment.CENTER));
+            addFooter(doc, regular);
+
+            doc.close();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate quote PDF", e);
         }
     }
 

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>KPI Nhân Viên | Car Management</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4><i class="fas fa-chart-line me-2 text-primary"></i>KPI Nhân Viên Kinh Doanh</h4>
+        </div>
+
+        <!-- Filter -->
+        <form th:action="@{/admin/kpi}" method="get" class="mb-4">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Tháng</label>
+                    <select class="form-select" name="month">
+                        <option value="0" th:selected="${selectedMonth == 0}">-- Cả năm --</option>
+                        <option th:each="m : ${months}" th:value="${m}"
+                                th:text="'Tháng ' + ${m}"
+                                th:selected="${m == selectedMonth}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Năm</label>
+                    <input type="number" class="form-control" name="year"
+                           th:value="${selectedYear}" min="2020" max="2099">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i>Xem KPI
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Summary cards -->
+        <div class="row g-3 mb-4" th:if="${!kpiList.isEmpty()}">
+            <div class="col-md-3">
+                <div class="card border-0 bg-primary text-white shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="fs-4 fw-bold"
+                             th:text="${kpiList.size()}"></div>
+                        <div class="small">Nhân Viên Hoạt Động</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-success text-white shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="fs-4 fw-bold"
+                             th:text="${#aggregates.sum(kpiList.![orderCount])}"></div>
+                        <div class="small">Tổng Đơn Hàng</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-info text-white shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="fs-4 fw-bold"
+                             th:text="${#aggregates.sum(kpiList.![vehiclesSold])}"></div>
+                        <div class="small">Xe Đã Bán</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-warning text-dark shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="fs-5 fw-bold"
+                             th:text="${#numbers.formatDecimal(#aggregates.sum(kpiList.![totalRevenue]), 0, 'COMMA', 0, 'POINT') + 'đ'}"></div>
+                        <div class="small">Tổng Doanh Thu</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Period label -->
+        <p class="text-muted small mb-2">
+            <i class="fas fa-calendar me-1"></i>
+            <span th:if="${selectedMonth == 0}" th:text="'Năm ' + ${selectedYear}"></span>
+            <span th:if="${selectedMonth != 0}" th:text="'Tháng ' + ${selectedMonth} + '/' + ${selectedYear}"></span>
+        </p>
+
+        <!-- KPI Table -->
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center">#</th>
+                            <th>Nhân Viên</th>
+                            <th>Mã NV</th>
+                            <th class="text-center">Đơn Hàng</th>
+                            <th class="text-center">Xe Bán</th>
+                            <th class="text-end">Doanh Thu</th>
+                            <th class="text-end">Hoa Hồng</th>
+                            <th class="text-center">% Hoa Hồng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="kpi, stat : ${kpiList}">
+                            <td class="text-center text-muted small" th:text="${stat.count}"></td>
+                            <td class="fw-semibold" th:text="${kpi.fullName}"></td>
+                            <td><span class="badge bg-secondary" th:text="${kpi.employeeCode}"></span></td>
+                            <td class="text-center">
+                                <span class="badge bg-primary rounded-pill" th:text="${kpi.orderCount}"></span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-info rounded-pill" th:text="${kpi.vehiclesSold}"></span>
+                            </td>
+                            <td class="text-end fw-semibold text-success"
+                                th:text="${#numbers.formatDecimal(kpi.totalRevenue, 0, 'COMMA', 0, 'POINT') + 'đ'}"></td>
+                            <td class="text-end text-warning"
+                                th:text="${#numbers.formatDecimal(kpi.commission, 0, 'COMMA', 0, 'POINT') + 'đ'}"></td>
+                            <td class="text-center small text-muted"
+                                th:text="${kpi.totalRevenue.signum() > 0} ? ${#numbers.formatDecimal(kpi.commission.divide(kpi.totalRevenue, 4, T(java.math.RoundingMode).HALF_UP).multiply(T(java.math.BigDecimal).valueOf(100)), 1, 'POINT', 1, 'POINT') + '%'} : '—'"></td>
+                        </tr>
+                        <tr th:if="${kpiList.isEmpty()}">
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="fas fa-chart-bar fa-2x mb-2 d-block"></i>
+                                Chưa có dữ liệu cho kỳ này
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

@@ -96,4 +96,26 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     BigDecimal sumCommissionByEmployeeAndMonth(@Param("employeeId") Long employeeId,
                                               @Param("month") int month,
                                               @Param("year") int year);
+
+    @Query(value = """
+        SELECT emp.id,
+               emp.employee_code,
+               u.full_name,
+               COUNT(o.id)                         AS order_count,
+               COALESCE(SUM(o.total_amount), 0)    AS total_revenue,
+               COALESCE(SUM(o.commission_amt), 0)  AS total_commission,
+               COUNT(DISTINCT oi.vehicle_id)        AS vehicles_sold
+        FROM employees emp
+        JOIN users u ON emp.user_id = u.id
+        LEFT JOIN orders o
+               ON o.employee_id = emp.id
+              AND (:month = 0 OR CAST(EXTRACT(MONTH FROM o.order_date) AS int) = :month)
+              AND CAST(EXTRACT(YEAR FROM o.order_date) AS int) = :year
+              AND o.status != 'CANCELLED'
+        LEFT JOIN order_items oi ON oi.order_id = o.id
+        WHERE emp.active = true
+        GROUP BY emp.id, emp.employee_code, u.full_name
+        ORDER BY total_revenue DESC
+        """, nativeQuery = true)
+    List<Object[]> findEmployeeKpi(@Param("month") int month, @Param("year") int year);
 }

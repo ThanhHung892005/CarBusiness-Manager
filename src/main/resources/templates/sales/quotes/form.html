@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title>Tạo Báo Giá | Car Management</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4><i class="fas fa-file-alt me-2 text-primary"></i>Tạo Báo Giá Xe</h4>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">
+                        <i class="fas fa-info-circle me-1 text-info"></i>
+                        Điền thông tin báo giá — PDF sẽ được tải xuống ngay sau khi submit
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/sales/quotes}" th:object="${quoteRequest}" method="post">
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Tên Khách Hàng <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" th:field="*{customerName}"
+                                           placeholder="Nguyễn Văn A"
+                                           th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid'">
+                                    <div class="invalid-feedback" th:errors="*{customerName}"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Số Điện Thoại <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" th:field="*{customerPhone}"
+                                           placeholder="0901234567"
+                                           th:classappend="${#fields.hasErrors('customerPhone')} ? 'is-invalid'">
+                                    <div class="invalid-feedback" th:errors="*{customerPhone}"></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Email (tuỳ chọn)</label>
+                                <input type="email" class="form-control" th:field="*{customerEmail}"
+                                       placeholder="email@example.com">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Xe Báo Giá <span class="text-danger">*</span></label>
+                                <select class="form-select" th:field="*{vehicleId}"
+                                        id="vehicleSelect"
+                                        th:classappend="${#fields.hasErrors('vehicleId')} ? 'is-invalid'">
+                                    <option value="">-- Chọn xe --</option>
+                                    <option th:each="v : ${availableVehicles}"
+                                            th:value="${v.id}"
+                                            th:text="${v.carModel.brand.name + ' ' + v.carModel.name + ' ' + v.carModel.year + ' — ' + v.color + ' (VIN: ' + v.vin + ')'}"
+                                            th:data-price="${v.sellingPrice}"></option>
+                                </select>
+                                <div class="invalid-feedback" th:errors="*{vehicleId}"></div>
+                            </div>
+
+                            <div id="priceInfo" class="alert alert-light border small mb-3" style="display:none">
+                                <i class="fas fa-tag me-1 text-success"></i>
+                                Giá niêm yết: <strong id="listedPrice"></strong>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Chiết Khấu (đ)</label>
+                                    <input type="number" class="form-control" th:field="*{discountAmount}"
+                                           id="discountAmount" min="0" step="1000000" placeholder="0">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Hiệu Lực (ngày)</label>
+                                    <input type="number" class="form-control" th:field="*{validDays}"
+                                           min="1" max="90">
+                                </div>
+                            </div>
+
+                            <div id="totalInfo" class="alert alert-primary small mb-3" style="display:none">
+                                <i class="fas fa-calculator me-1"></i>
+                                Giá báo: <strong id="quotedPrice"></strong>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Ghi Chú</label>
+                                <textarea class="form-control" th:field="*{notes}" rows="2"
+                                          placeholder="Bao gồm gói phụ kiện, bảo hành..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-file-pdf me-1"></i>Xuất Báo Giá PDF
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts">
+<script>
+    const vehicleSelect  = document.getElementById('vehicleSelect');
+    const discountInput  = document.getElementById('discountAmount');
+    const priceInfo      = document.getElementById('priceInfo');
+    const totalInfo      = document.getElementById('totalInfo');
+    const listedPriceEl  = document.getElementById('listedPrice');
+    const quotedPriceEl  = document.getElementById('quotedPrice');
+
+    function formatMoney(n) {
+        return new Intl.NumberFormat('vi-VN').format(n) + ' đ';
+    }
+
+    function updatePrices() {
+        const opt = vehicleSelect.options[vehicleSelect.selectedIndex];
+        const price = opt && opt.dataset.price ? parseFloat(opt.dataset.price) : 0;
+        const discount = parseFloat(discountInput.value) || 0;
+        if (price > 0) {
+            priceInfo.style.display = '';
+            listedPriceEl.textContent = formatMoney(price);
+            totalInfo.style.display = '';
+            quotedPriceEl.textContent = formatMoney(price - discount);
+        } else {
+            priceInfo.style.display = 'none';
+            totalInfo.style.display = 'none';
+        }
+    }
+
+    vehicleSelect.addEventListener('change', updatePrices);
+    discountInput.addEventListener('input', updatePrices);
+</script>
+</th:block>
+</body>
+</html>
