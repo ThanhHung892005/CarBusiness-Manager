@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,7 +18,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     Optional<Employee> findByUserId(Long userId);
 
+    Optional<Employee> findByUserUsername(String username);
+
     Optional<Employee> findTopByOrderByIdDesc();
+
+    @Query("SELECT e FROM Employee e JOIN FETCH e.user WHERE e.active = true ORDER BY e.employeeCode")
+    List<Employee> findAllActiveWithUser();
 
     @Query("""
         SELECT e FROM Employee e

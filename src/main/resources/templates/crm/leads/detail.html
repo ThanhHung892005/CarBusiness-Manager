@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main}, ~{::scripts})}">
+<head><title th:text="${lead.fullName + ' | CRM'}">Lead Detail</title></head>
+<body>
+<main th:fragment="main">
+    <div class="container">
+
+        <!-- Breadcrumb & actions -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a th:href="@{/crm/leads}">Leads</a></li>
+                    <li class="breadcrumb-item active" th:text="${lead.fullName}"></li>
+                </ol>
+            </nav>
+            <div class="d-flex gap-2">
+                <a th:href="@{/crm/leads/{id}/edit(id=${lead.id})}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-edit me-1"></i>Chỉnh Sửa
+                </a>
+                <a th:href="@{/crm/leads}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Danh Sách
+                </a>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left: Lead info -->
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold"><i class="fas fa-user me-1"></i>Thông Tin Lead</span>
+                        <span class="badge"
+                              th:classappend="${lead.status.name() == 'NEW'} ? 'bg-secondary' :
+                                              (${lead.status.name() == 'CONTACTED'} ? 'bg-info' :
+                                              (${lead.status.name() == 'TEST_DRIVE'} ? 'bg-primary' :
+                                              (${lead.status.name() == 'NEGOTIATING'} ? 'bg-warning text-dark' :
+                                              (${lead.status.name() == 'CLOSED_WON'} ? 'bg-success' : 'bg-danger'))))"
+                              th:text="${lead.status.displayName}"></span>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0 small">
+                            <dt class="col-5 text-muted">Họ tên</dt>
+                            <dd class="col-7 fw-semibold" th:text="${lead.fullName}"></dd>
+
+                            <dt class="col-5 text-muted">Điện thoại</dt>
+                            <dd class="col-7"><a th:href="'tel:' + ${lead.phone}" th:text="${lead.phone}"></a></dd>
+
+                            <dt class="col-5 text-muted">Email</dt>
+                            <dd class="col-7 text-truncate" th:text="${lead.email ?: '—'}"></dd>
+
+                            <dt class="col-5 text-muted">Nguồn</dt>
+                            <dd class="col-7">
+                                <span class="badge"
+                                      th:classappend="${lead.source.name() == 'FACEBOOK'} ? 'bg-primary' :
+                                                      (${lead.source.name() == 'WALK_IN'} ? 'bg-success' :
+                                                      (${lead.source.name() == 'REFERRAL'} ? 'bg-info' : 'bg-secondary'))"
+                                      th:text="${lead.source.displayName}"></span>
+                            </dd>
+
+                            <dt class="col-5 text-muted">NV phụ trách</dt>
+                            <dd class="col-7" th:text="${lead.assignedEmployee != null ? lead.assignedEmployee.user.fullName : '—'}"></dd>
+
+                            <dt class="col-5 text-muted">Ngày tạo</dt>
+                            <dd class="col-7" th:text="${#temporals.format(lead.createdAt, 'dd/MM/yyyy HH:mm')}"></dd>
+
+                            <th:block th:if="${lead.notes != null and !lead.notes.isEmpty()}">
+                                <dt class="col-5 text-muted">Ghi chú</dt>
+                                <dd class="col-7" th:text="${lead.notes}"></dd>
+                            </th:block>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Quick status change -->
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header fw-semibold"><i class="fas fa-exchange-alt me-1"></i>Đổi Trạng Thái</div>
+                    <div class="card-body">
+                        <form th:action="@{/crm/leads/{id}/status(id=${lead.id})}" method="post">
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" name="status">
+                                    <option th:each="s : ${statuses}" th:value="${s.name()}"
+                                            th:text="${s.displayName}"
+                                            th:selected="${s == lead.status}"></option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Lưu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Convert to customer -->
+                <div class="card shadow-sm" th:if="${lead.convertedCustomer == null and lead.status.name() != 'CLOSED_LOST'}">
+                    <div class="card-body text-center">
+                        <p class="small text-muted mb-2">Chuyển lead này thành khách hàng trong hệ thống</p>
+                        <form th:action="@{/crm/leads/{id}/convert(id=${lead.id})}" method="post">
+                            <button type="submit" class="btn btn-success btn-sm"
+                                    onclick="return confirm('Xác nhận chuyển đổi lead thành khách hàng?')">
+                                <i class="fas fa-user-check me-1"></i>Chuyển Thành KH
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card shadow-sm border-success" th:if="${lead.convertedCustomer != null}">
+                    <div class="card-body text-center">
+                        <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                        <p class="small mb-1">Đã chuyển đổi thành khách hàng</p>
+                        <a th:href="@{/sales/customers/{id}(id=${lead.convertedCustomer.id})}"
+                           class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            <span th:text="${lead.convertedCustomer.customerCode}"></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Interactions -->
+            <div class="col-md-8">
+                <!-- Add interaction form -->
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header fw-semibold"><i class="fas fa-plus-circle me-1 text-primary"></i>Ghi Nhận Tương Tác</div>
+                    <div class="card-body">
+                        <form th:action="@{/crm/leads/{id}/interactions(id=${lead.id})}"
+                              th:object="${interactionForm}" method="post">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <select class="form-select form-select-sm" th:field="*{type}"
+                                            th:classappend="${#fields.hasErrors('type')} ? 'is-invalid'">
+                                        <option value="">-- Loại --</option>
+                                        <option th:each="t : ${interactionTypes}" th:value="${t.name()}"
+                                                th:text="${t.displayName}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="datetime-local" class="form-control form-control-sm"
+                                           th:field="*{interactionDate}"
+                                           th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd''T''HH:mm')}">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <textarea class="form-control form-control-sm" th:field="*{content}" rows="2"
+                                          th:classappend="${#fields.hasErrors('content')} ? 'is-invalid'"
+                                          placeholder="Nội dung tương tác..."></textarea>
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback d-block small" th:if="${#fields.hasErrors('content')}"
+                                 th:errors="*{content}"></div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Interaction timeline -->
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">
+                        <i class="fas fa-history me-1"></i>Lịch Sử Tương Tác
+                        <span class="badge bg-secondary ms-1" th:text="${#lists.size(interactions)}"></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div th:if="${#lists.isEmpty(interactions)}" class="text-center text-muted py-4">
+                            Chưa có tương tác nào
+                        </div>
+                        <div class="list-group list-group-flush" th:if="${!#lists.isEmpty(interactions)}">
+                            <div class="list-group-item" th:each="ci : ${interactions}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-light text-dark border small"
+                                                  th:text="${ci.type.displayName}"></span>
+                                            <span class="small text-muted"
+                                                  th:text="${#temporals.format(ci.interactionDate, 'dd/MM/yyyy HH:mm')}"></span>
+                                            <span class="small text-muted" th:if="${ci.employee != null}">
+                                                — <span th:text="${ci.employee.user.fullName}"></span>
+                                            </span>
+                                        </div>
+                                        <p class="mb-0 small" th:text="${ci.content}"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

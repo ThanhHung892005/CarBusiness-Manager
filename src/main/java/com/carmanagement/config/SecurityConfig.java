@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasRole("GIAM_DOC")
                 .requestMatchers("/inventory/**").hasAnyRole("GIAM_DOC", "NV_KINH_DOANH", "THU_KHO")
                 .requestMatchers("/sales/**").hasAnyRole("GIAM_DOC", "NV_KINH_DOANH")
+                .requestMatchers("/crm/**").hasAnyRole("GIAM_DOC", "NV_KINH_DOANH")
                 .requestMatchers("/ke-toan/**").hasAnyRole("GIAM_DOC", "KE_TOAN")
                 .anyRequest().authenticated()
             )
